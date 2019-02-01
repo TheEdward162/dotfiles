@@ -63,7 +63,7 @@ xrandr --auto
 ```
 
 ### run.sh
-If you aren't installing/using 32bit libraries, change `LIBRARY_PATHS="/opt/nvidia/lib /opt/nvidia/lib32"` to `LIBRARY_PATHS="/opt/nvidia/lib"`.
+If you aren't installing/using 32bit libraries, change `LIBRARY_PATHS="$PREFIX/lib $PREFIX/lib32"` to `LIBRARY_PATHS="$PREFIX/lib"` where `$PREFIX` is the same value that you used in `install.sh` (default `/opt/nvidia`).
 
 After you have installed the nvidia libraries, set up your xorg config files and changed the `run.sh` script to point at them, all that's left is to run it. Switch to a TTY that doesn't have X session running on it. You can do this using `Ctrl+Alt+FX` keys. If you are currently in console mode, there is no need to switch to a different TTY.
 
