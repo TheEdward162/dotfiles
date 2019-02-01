@@ -48,7 +48,7 @@ You should now be running your X session on your NVIDIA card.
 ### install.sh
 *This script is a terrible hack, use at your own risk.*
 
-First thing to do is to edit the `$PREFIX` variable in the `install.sh` script. That way you can control where the nvidia libraries will be installed. Also if you are not installing/using 32bit libraries, delete them from the `install.sh` script from line `xbps-install -fy libGL libEGL libGL-32bit libEGL-32bit` (make it `xbps-install -fy libGL libEGL`).
+First thing to do is to edit the `$PREFIX` variable in the `install.sh` script. That way you can control where the nvidia libraries will be installed. Also if you are not installing/using 32bit libraries (you will need to select no in the nvidia installer), delete them from the `install.sh` script from line `xbps-install -fy libGL libEGL libGL-32bit libEGL-32bit` (make it `xbps-install -fy libGL libEGL`).
 
 Next step is to obtain the `NVIDIA-Linux-x86_64-XXX.XX.run` binary from nvidia driver download page. Then run `sudo ./install.sh ./NVIDIA-Linux-x86_64-XXX.XX.run` and basically say yes to everything. This will mess up your mesa installation, but the script should fix that later.
 
@@ -74,7 +74,7 @@ Section "Files"
 	ModulePath "/usr/lib/xorg/modules"
 EndSection
 ```
-so that all the entries starting with `/opt/nvidia` start with your `$PREFIX` instead.
+so that all the entries starting with `/opt/nvidia` start with your `$PREFIX` instead. Also remove lines `ModulePath "/opt/nvidia/lib32"` and `ModulePath "/opt/nvidia/lib32/vdpau"` if you aren't installing/using 32bit libraries.
 
 You also need to prepare your `xinitrc` somewhere and change the `run.sh` script to point to them. Specifically the lines:
 ```
@@ -99,3 +99,9 @@ After you have installed the nvidia libraries, set up your xorg config files and
 The script will start an X server and run your `XINITRC_PATH` script with the first argument passed from it and the second set to `nvidia` so `run.sh i3` will run `XINITRC_PATH i3 nvidia`.
 
 Your X session should now be running on NVIDIA card. This can be checked with programs such as `glmark2`. After closing that session, your nvidia card should power off.
+
+### More info
+* [this blog post](https://www.ifnull.org/articles/void_optimus_nvidia_intel/) - inspiration for `install.sh`
+* [nvidia-xrun](https://github.com/Witko/nvidia-xrun) - inspiration for `run.sh`
+* [this void-packages issue](https://github.com/voidlinux/void-packages/issues/5863) - issue with conflicting opengl libraries
+* [Void Wiki Steam article](https://wiki.voidlinux.org/Steam) - has a guide on 32bit libraries
