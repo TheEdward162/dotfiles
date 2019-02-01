@@ -57,7 +57,26 @@ If the script runs successfully, you should now have a working mesa installation
 *Note: This could probably be done with chroot to avoid having to reinstall system libraries, but I couldn't get it to work yet.*
 
 ### xorg
-Now you need to create a valid xorg configuration somewhere in `/etc/X11` (for example `/etc/X11/nvidia`). Copy `xorg.conf` and `xorg.conf.d` there. You also need to prepare your `xinitrc` somewhere and change the `run.sh` script to point to them. Specifically the lines:
+Now you need to create a valid xorg configuration somewhere in `/etc/X11` (for example `/etc/X11/nvidia`). Copy `xorg.conf` and `xorg.conf.d` there. If you changed the `$PREFIX` variable in `install.sh`, you will need to edit `xorg.conf` as well. Edit the lines:
+```
+Section "Files"
+	ModulePath "/opt/nvidia/lib"
+	ModulePath "/opt/nvidia/lib/vdpau"
+  
+	ModulePath "/opt/nvidia/lib32"
+	ModulePath "/opt/nvidia/lib32/vdpau"
+  
+	ModulePath "/opt/nvidia/lib/xorg/modules"
+	ModulePath "/opt/nvidia/lib/xorg/modules/drivers"
+	ModulePath "/opt/nvidia/lib/xorg/modules/extensions"
+	ModulePath "/opt/nvidia/lib/tls"
+
+	ModulePath "/usr/lib/xorg/modules"
+EndSection
+```
+so that all the entries starting with `/opt/nvidia` start with your `$PREFIX` instead.
+
+You also need to prepare your `xinitrc` somewhere and change the `run.sh` script to point to them. Specifically the lines:
 ```
 XINITRC_PATH=$HOME/.xinitrc
 CONFIG_PATH=nvidia/xorg.conf
