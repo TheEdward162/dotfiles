@@ -52,7 +52,7 @@ First thing to do is to edit the `$PREFIX` variable in the `install.sh` script. 
 
 Next step is to obtain the `NVIDIA-Linux-x86_64-XXX.XX.run` binary from nvidia driver download page. Then run `sudo ./install.sh ./NVIDIA-Linux-x86_64-XXX.XX.run` and basically say yes to everything. This will mess up your mesa installation, but the script should fix that later.
 
-If the script runs successfully, you should now have a working mesa installation and a separate nvidia instalation in `$PREFIX` (default in `/opt/nvidia`).
+The script should now delete broken nvidia fwb libraries from `$PREFIX/lib/xorg/modules` and then force-reinstall your `libGL` and `libEGL` packages (probably also `libGL-32bit` and `libEGL-32bit`) because the nvidia installer changes them even though it shouldn't. If the script runs successfully, you should now have a working mesa installation and a separate nvidia instalation in `$PREFIX` (default in `/opt/nvidia`).
 
 *Note: This could probably be done with chroot to avoid having to reinstall system libraries, but I couldn't get it to work yet.*
 
