@@ -76,27 +76,28 @@ EndSection
 ```
 so that all the entries starting with `/opt/nvidia` start with your `$PREFIX` instead. Also remove lines `ModulePath "/opt/nvidia/lib32"` and `ModulePath "/opt/nvidia/lib32/vdpau"` if you aren't installing/using 32bit libraries.
 
-You also need to prepare your `xinitrc` somewhere and change the `run.sh` script to point to them. Specifically the lines:
-```
-XINITRC_PATH=$HOME/.xinitrc
-CONFIG_PATH=nvidia/xorg.conf
-CONFIGDIR_PATH=nvidia/xorg.conf.d
-```
-`XINITRC_PATH` expects an absolute path, `CONFIG_PATH` and `CONFIGDIR_PATH` need a path relative to `/etc/X11`.
-Your `xinitrc` needs to contain at least these two lines:
+Now you need to prepare your `xinitrc` somewhere (default `$HOME/.xinitrc`, but make sure it differentiates between running xorg on intel and nvidia - `run.sh` will set `$2` to `nvidia`, you can check for that). It needs to contain at least these two lines for nvidia xorg session to work (otherwise you get a black screen):
 ```
 xrandr --setprovideroutputsource modesetting NVIDIA-0
 xrandr --auto
 ```
+
+If you changed the paths of `xorg.conf`, `xorg.conf.d` or `xinirc`, change the `run.sh` script to point to them. Specifically the lines:
+```
+XINITRC_PATH="$HOME/.xinitrc"
+CONFIG_PATH="nvidia/xorg.conf"
+CONFIGDIR_PATH="nvidia/xorg.conf.d"
+```
+`XINITRC_PATH` expects an absolute path to your `xinitrc`. `CONFIG_PATH` and `CONFIGDIR_PATH` need a path relative to `/etc/X11`.
 
 ### run.sh
 *This is mostly just a copy of [nvidia-xrun](https://github.com/Witko/nvidia-xrun) but instead of removing the device from the pci bus (which does power it down, but only until the next rescan), it unbinds the nvidia driver from it before unloading it, which makes the card power down without having to remove it.*
 
 If you aren't installing/using 32bit libraries, change `LIBRARY_PATHS="$PREFIX/lib $PREFIX/lib32"` to `LIBRARY_PATHS="$PREFIX/lib"` where `$PREFIX` is the same value that you used in `install.sh` (default `/opt/nvidia`).
 
-After you have installed the nvidia libraries, set up your xorg config files and changed the `run.sh` script to point at them, all that's left is to run it. Switch to a TTY that doesn't have X session running on it. You can do this using `Ctrl+Alt+FX` keys. If you are currently in console mode, there is no need to switch to a different TTY.
+After you have installed the nvidia libraries, set up your xorg config files and changed the `run.sh` script to point to them, all that's left is to run it. Switch to a TTY that doesn't have X session running on it. You can do this using `Ctrl+Alt+FX` keys. If you are currently in console mode, there is no need to switch to a different TTY.
 
-The script will start an X server and run your `XINITRC_PATH` script with the first argument passed from it and the second set to `nvidia` so `run.sh i3` will run `XINITRC_PATH i3 nvidia`.
+The script will start an X server and run your `XINITRC_PATH` script with the first argument passed from it and the second set to `nvidia` (so `./run.sh i3` will run `XINITRC_PATH i3 nvidia`).
 
 Your X session should now be running on NVIDIA card. This can be checked with programs such as `glmark2`. After closing that session, your nvidia card should power off.
 
