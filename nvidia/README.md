@@ -63,6 +63,8 @@ xrandr --auto
 ```
 
 ### run.sh
+*This is mostly just a copy of [nvidia-xrun](https://github.com/Witko/nvidia-xrun) but instead of removing the device from the pci bus (which does power it down, but only until the next rescan), it unbinds the nvidia driver from it before unloading it, which makes the card power down without having to remove it.*
+
 If you aren't installing/using 32bit libraries, change `LIBRARY_PATHS="$PREFIX/lib $PREFIX/lib32"` to `LIBRARY_PATHS="$PREFIX/lib"` where `$PREFIX` is the same value that you used in `install.sh` (default `/opt/nvidia`).
 
 After you have installed the nvidia libraries, set up your xorg config files and changed the `run.sh` script to point at them, all that's left is to run it. Switch to a TTY that doesn't have X session running on it. You can do this using `Ctrl+Alt+FX` keys. If you are currently in console mode, there is no need to switch to a different TTY.
