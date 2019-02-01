@@ -46,7 +46,7 @@ Next step is to obtain the `NVIDIA-Linux-x86_64-XXX.XX.run` binary from nvidia d
 
 If the script runs successfully, you should now have a working mesa installation and a separate nvidia instalation in `$PREFIX` (default in `/opt/nvidia`).
 
-*Note: This could probably be done with chroot to avoid having to reinstall system libraries, but I couldn't get it to work.*
+*Note: This could probably be done with chroot to avoid having to reinstall system libraries, but I couldn't get it to work yet.*
 
 ### xorg
 Now you need to create a valid xorg configuration somewhere in `/etc/X11` (for example `/etc/X11/nvidia`). Copy `xorg.conf` and `xorg.conf.d` there. You also need to prepare your `xinitrc` somewhere and change the `run.sh` script to point to them. Specifically the lines:
@@ -63,6 +63,8 @@ xrandr --auto
 ```
 
 ### run.sh
+If you aren't installing/using 32bit libraries, change `LIBRARY_PATHS="/opt/nvidia/lib /opt/nvidia/lib32"` to `LIBRARY_PATHS="/opt/nvidia/lib"`.
+
 After you have installed the nvidia libraries, set up your xorg config files and changed the `run.sh` script to point at them, all that's left is to run it. Switch to a TTY that doesn't have X session running on it. You can do this using `Ctrl+Alt+FX` keys. If you are currently in console mode, there is no need to switch to a different TTY.
 
 The script will start an X server and run your `XINITRC_PATH` script with the first argument passed from it and the second set to `nvidia` so `run.sh i3` will run `XINITRC_PATH i3 nvidia`.
