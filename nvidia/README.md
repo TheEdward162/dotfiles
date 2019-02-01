@@ -1,5 +1,4 @@
 ## NVIDIA hacks for NVIDIA Optimus
-<hr>
 
 ### Dependencies
 * `nvidia-dkms` package for the kernel modules.
