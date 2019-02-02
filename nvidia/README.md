@@ -7,7 +7,7 @@
 * `xrandr xorg`
 * any WM
 
-You will also need to blacklist the nvidia kernel modules so that they won't get loaded at boot and your NVIDIA card will stay off until you need it. You can do this by creating a file in `/usr/lib/modprobe.d` with any name and the following text:
+You will also need to blacklist the nvidia kernel modules so that they won't get loaded at boot and your NVIDIA card will stay off until you need it. You can do this by creating a file in `/etc/modprobe.d` with any name (usually `nvidia.conf`) and the following text:
 ```
 blacklist nvidia
 blacklist nvidia-drm
