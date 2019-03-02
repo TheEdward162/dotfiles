@@ -14,15 +14,13 @@ If you don't want to change any paths or scripts:
 git clone https://github.com/TheEdward162/dotfiles.git
 cd dotfiles/nvidia
 sudo mkdir /opt/nvidia
-sudo cp install.sh run.sh /opt/nvidia/
+sudo cp install.py run.sh /opt/nvidia/
 
 sudo mkdir /etc/X11/nvidia
 sudo cp -r xorg.conf xorg.conf.d /etc/X11/nvidia/
-```
-Now download the nvidia driver binary from nvidia driver download page and put it in `/opt/nvidia`.
-```
+
 cd /opt/nvidia
-sudo ./install.sh ./NVIDIA-Linux-x86_64-XXX.XX.run
+sudo python3 ./install.py
 ```
 Now switch to a TTY that doesn't have X session running.
 ```
@@ -37,16 +35,14 @@ and that it launches a correct wm session after that.
 
 You should now be running your X session on your NVIDIA card.
 
-### install.sh
-*This script is a terrible hack, use at your own risk.*
+### install.py
+*This script is partly a hack, use at your own risk.*
 
-First thing to do is to edit the `$PREFIX` variable in the `install.sh` script. That way you can control where the nvidia libraries will be installed. Also if you are not installing/using 32bit libraries, delete them from the `install.sh` script from line `xbps-install -fy libGL libEGL libGL-32bit libEGL-32bit` (make it `xbps-install -fy libGL libEGL`).
+This script prepares a fakeroot and uses xbps-install to install the `nvidia nvidia-libs nvidia-libs-32bit` packages into it so that they don't collide with your intel packages (namely `libGL libEGL`). It creates a `fakeroot` directory in current working directory and then creates `usr/lib usr/lib32` folders inside. It also creates symlinks `fakeroot/lib -> fakeroot/usr/lib` and `fakeroot/lib32 -> fakeroot/usr/lib32`.
 
-Next step is to obtain the `NVIDIA-Linux-x86_64-XXX.XX.run` binary from nvidia driver download page. Then run `sudo ./install.sh ./NVIDIA-Linux-x86_64-XXX.XX.run` and basically say yes to everything. This will mess up your mesa installation, but the script should fix that later.
+This script also creates a fake xbps package database in `fakeroot/var/db/xbps/pkgdb-0.38.plist` to trick xbps into thinking all the required packages except for the nvidia driver ones are actually in the fakeroot. This is a *hack*, but it should work as long as the required packages are actually installed on your system.
 
-If the script runs successfully, you should now have a working mesa installation and a separate nvidia instalation in `$PREFIX` (default in `/opt/nvidia`).
-
-*Note: This could probably be done with chroot to avoid having to reinstall system libraries, but I couldn't get it to work yet.*
+After running the python script, you will be prompted by `xbps-install` for confirmation, but all other `xbps-install` output will be only printed after the script ends.
 
 ### xorg
 Now you need to create a valid xorg configuration somewhere in `/etc/X11` (for example `/etc/X11/nvidia`). Copy `xorg.conf` and `xorg.conf.d` there. You also need to prepare your `xinitrc` somewhere and change the `run.sh` script to point to them. Specifically the lines:
@@ -63,7 +59,7 @@ xrandr --auto
 ```
 
 ### run.sh
-If you aren't installing/using 32bit libraries, change `LIBRARY_PATHS="/opt/nvidia/lib /opt/nvidia/lib32"` to `LIBRARY_PATHS="/opt/nvidia/lib"`.
+If you aren't installing/using 32bit libraries, change `LIBRARY_PATHS="/opt/nvidia/fakeroot/lib /opt/nvidia/fakeroot/lib32"` to `LIBRARY_PATHS="/opt/nvidia/fakeroot/lib"`.
 
 After you have installed the nvidia libraries, set up your xorg config files and changed the `run.sh` script to point at them, all that's left is to run it. Switch to a TTY that doesn't have X session running on it. You can do this using `Ctrl+Alt+FX` keys. If you are currently in console mode, there is no need to switch to a different TTY.
 
