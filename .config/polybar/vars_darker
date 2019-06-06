@@ -1,0 +1,49 @@
+; colors
+c_base = #30000000
+c_base_alt = #30FFFFFF
+
+c_text = #FFFFFF
+c_text_alt = #AAAAAA
+
+c_accent = #E6003A
+c_accent_alt = #E6AC00
+
+c_red = #E6003A
+c_green = #3AE600
+c_blue = #003AE6
+c_orange = #E6AC00
+
+c_prefix = ${self.c_text} 
+
+; coreload colors
+c_coreload_0 = #FFFFFF
+c_coreload_1 = #FFDBDA
+c_coreload_2 = #FFB8B6
+c_coreload_3 = #FF9591
+c_coreload_4 = #FF716D
+c_coreload_5 = #FF4E48
+c_coreload_6 = #FF2B24
+c_coreload_7 = #FF0800
+
+; underlines
+u_filesystem = #00
+u_backlight = #00
+u_volume = #00
+u_keyboard = #00
+u_wlan = #00
+u_cpu = #00
+u_temp = #00
+u_temp_warm = #00
+u_memory = #00
+u_battery_full = #00
+u_battery_charging = #00
+u_battery_discharging = #00
+u_date = #00
+
+; fonts
+font_0 = "Segoe UI:pixelsize=10;2"
+font_1 = "Segoe UI:pixelsize=10:weight=bold;2"
+font_2 = "Material Icons:pixelsize=11;4"
+font_3 = "Font Awesome 5 Free:style=Solid:pixelsize=10;2"
+font_4 = "Font Awesome 5 Free:style=Regular:pixelsize=10;3"
+font_5 = "DejaVu Sans:pixelsize=10;0"

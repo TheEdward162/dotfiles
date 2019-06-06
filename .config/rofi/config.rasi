@@ -1,0 +1,6 @@
+configuration {
+	terminal: "alacritty";
+	case-sensitive: false;
+
+	theme: "theme";
+}

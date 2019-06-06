@@ -1,0 +1,57 @@
+; colors
+c_base = #30000000
+c_base_alt = #30FFFFFF
+
+c_text = #FFFFFF
+c_text_alt = #AAAAAA
+
+c_accent = #E6003A
+c_accent_alt = #E6AC00
+
+c_red = #E6003A
+c_green = #3AE600
+c_blue = #003AE6
+c_orange = #E63900
+c_yellow = #E6AC00
+
+c_prefix = ${self.c_text} 
+
+; coreload colors
+c_coreload_0 = #FFFFFF
+c_coreload_1 = #FFDBDA
+c_coreload_2 = #FFB8B6
+c_coreload_3 = #FF9591
+c_coreload_4 = #FF716D
+c_coreload_5 = #FF4E48
+c_coreload_6 = #FF2B24
+c_coreload_7 = #FF0800
+
+; underlines
+u_filesystem = #00
+u_backlight = ${self.c_yellow}
+
+u_volume = ${self.c_yellow}
+u_volume_muted = ${self.c_orange}
+
+u_keyboard = ${self.c_red}
+
+u_wlan = #FFFFFF
+u_network = #FFFFFF
+
+u_temp = ${self.c_green}
+u_temp_warm = ${self.c_orange}
+
+u_memory = ${self.c_green}
+
+u_battery_full = #FFFFFF
+u_battery_charging = ${self.c_green}
+u_battery_discharging = ${self.c_orange}
+u_power_draw = #FFFFFF
+
+u_date = ${self.c_blue}
+
+u_cpu = #00
+
+; fonts
+font_regular = "Fira Sans:style=Regular:pixelsize=12;2"
+font_bold = "Fira Sans:style=Bold:pixelsize=12;2"

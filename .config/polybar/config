@@ -1,0 +1,328 @@
+[vars]
+include-file = /home/edward/.config/polybar/vars
+
+[settings]
+screenchange-reload = true
+;compositing-background = xor
+;compositing-background = screen
+;compositing-foreground = source
+;compositing-border = over
+
+[bar/tray]
+bottom = true
+
+;width = 128
+height = 32
+
+;offset-x = 100%:-138
+offset-y = 10
+
+background = #00000000
+
+tray-position = center
+tray-padding = 2
+tray-transparent = true
+tray-background = ${vars.c_base}
+tray-maxsize = 32
+
+modules-left = tray-label
+
+[module/tray-label]
+type = custom/text
+content = " "
+
+[bar/main]
+;monitor = eDP1
+
+width = 100%
+height = 29
+
+;offset-x = 0
+;offset-y = 0
+
+background = ${vars.c_base}
+foreground = ${vars.c_text}
+
+line-size = 2
+line-color = #00000000
+
+padding-left = 0
+padding-right = 2
+fixed-center = true
+
+cursor-click = pointer
+cursor-scroll = ns-resize
+
+font-0 = ${vars.font_regular}
+font-1 = ${vars.font_bold}
+
+font-2 = "FontAwesome:style=Solid:pixelsize=10;2"
+font-3 = "DejaVu Sans:size=10;0"
+
+separator = "  "
+
+modules-left = i3 xwindow
+modules-center = mpd
+modules-right = xbacklight pulseaudio xkeyboard xkeyboard_num network temperature memory battery power_draw date cpu
+
+wm-restack = i3
+
+tray-position = left
+tray-padding = 2
+tray-background = #000000
+tray-maxsize = 32
+
+; LEFT ;
+[module/i3]
+type = internal/i3
+format = <label-state> <label-mode>
+index-sort = true
+wrapping-scroll = false
+
+; Only show workspaces on the same output as the bar
+;pin-workspaces = true
+
+padding = 2
+
+label-mode-foreground = ${vars.c_text}
+label-mode-background = ${vars.c_accent}
+label-mode-padding = ${self.padding}
+
+; focused = Active workspace on focused monitor
+label-focused = %index%
+label-focused-background = ${vars.c_base_alt}
+label-focused-underline = ${vars.c_accent}
+label-focused-padding = ${self.padding}
+label-focused-font = 2
+
+; unfocused = Inactive workspace on any monitor
+label-unfocused = %index%
+label-unfocused-padding = ${self.padding}
+
+; visible = Active workspace on unfocused monitor
+label-visible = %index%
+label-visible-background = ${self.label-focused-background}
+label-visible-underline = ${self.label-focused-underline}
+label-visible-padding = ${self.label-focused-padding}
+
+; urgent = Workspace with urgency hint set
+label-urgent = %index%
+label-urgent-background = ${vars.c_accent_alt}
+label-urgent-padding = ${self.padding}
+
+[module/xwindow]
+type = internal/xwindow
+label = %title:0:75:...%
+;label = %title%
+label-foreground = ${vars.c_text_alt}
+
+; MIDDLE ;
+[module/mpd]
+type = internal/mpd
+
+format-online = <label-song>  <label-time>
+
+label-song-font = 2
+
+label-time = %elapsed% / %total%
+label-time-foreground = ${vars.c_text_alt}
+
+; RIGHT ;
+[module/filesystem]
+type = internal/fs
+interval = 25
+
+mount-0 = /
+
+format-mounted-prefix = "/: "
+format-mounted-prefix-foreground = ${vars.c_prefix}
+format-mounted-underline = ${vars.u_filesystem}
+
+label-mounted = "%percentage_used%%"
+
+[module/xbacklight]
+type = internal/xbacklight
+
+format-ramp-foreground = ${vars.c_prefix}
+format = <ramp> <label>
+format-underline = ${vars.u_backlight}
+; label = "%percentage%%"
+
+ramp-0 = 
+ramp-1 = 
+ramp-2 = 
+
+[module/pulseaudio]
+type = internal/pulseaudio
+
+format-volume = <ramp-volume> <label-volume>
+label-volume = "%percentage%%"
+format-volume-underline = ${vars.u_volume}
+
+format-muted-foreground = ${vars.c_prefix}
+label-muted = 
+format-muted-underline = ${vars.u_volume_muted}
+
+ramp-volume-foreground = ${vars.c_prefix}
+ramp-volume-0 = 
+ramp-volume-1 = 
+ramp-volume-2 = 
+
+[module/xkeyboard]
+type = internal/xkeyboard
+blacklist-0 = caps lock
+
+format-prefix = " "
+format-prefix-foreground = ${vars.c_prefix}
+
+format = <label-layout>
+format-underline = ${vars.u_keyboard}
+
+label-layout = %layout%
+
+label-indicator-padding = 0
+label-indicator-margin = 0
+
+[module/xkeyboard_num]
+type = internal/xkeyboard
+blacklist-0 = caps lock
+
+format = <label-indicator>
+format-underline = ${vars.u_keyboard}
+
+label-indicator = N
+label-indicator-padding = 0
+label-indicator-margin = 0
+
+[module/wlan]
+type = internal/network
+interface = wlp3s0
+interval = 3.0
+
+format-connected-underline = ${vars.u_wlan}
+format-connected-prefix = " "
+format-connected-prefix-foreground = ${vars.c_prefix}
+format-connected = <label-connected>
+label-connected = "%essid%"
+
+format-disconnected-underline = ${vars.u_wlan}
+format-disconnected = 
+format-disconnected-foreground = ${vars.c_prefix}
+
+[module/network]
+type = internal/network
+interface = wlp3s0
+label-connected =  %downspeed%   %upspeed%
+format-connected-underline = ${vars.u_network}
+
+[module/cpu]
+type = internal/cpu
+interval = 2
+
+format-prefix = 
+format-prefix-foreground = ${vars.c_prefix}
+format-underline = ${vars.u_cpu}
+
+format = <ramp-coreload>
+
+; ⣿⣶⣤⣀⠀⡀⣀⣄⣤⣦⣶⣷⣿
+ramp-coreload-0 = ⡀
+ramp-coreload-0-foreground = ${vars.c_coreload_0}
+ramp-coreload-1 = ⣀
+ramp-coreload-1-foreground = ${vars.c_coreload_1}
+ramp-coreload-2 = ⣄
+ramp-coreload-2-foreground = ${vars.c_coreload_2}
+ramp-coreload-3 = ⣤
+ramp-coreload-3-foreground = ${vars.c_coreload_3}
+ramp-coreload-4 = ⣦
+ramp-coreload-4-foreground = ${vars.c_coreload_4}
+ramp-coreload-5 = ⣶
+ramp-coreload-5-foreground = ${vars.c_coreload_5}
+ramp-coreload-6 = ⣷
+ramp-coreload-6-foreground = ${vars.c_coreload_6}
+ramp-coreload-7 = ⣿
+ramp-coreload-7-foreground = ${vars.c_coreload_7}
+
+[module/temperature]
+type = internal/temperature
+thermal-zone = 4
+warn-temperature = 60
+
+;     
+format-prefix = " "
+format-prefix-foreground = ${vars.c_prefix}
+
+format-underline = ${vars.u_temp}
+format = <label>
+label = "%temperature-c%"
+
+format-warn-prefix = " "
+format-warn-prefix-foreground = ${vars.c_orange}
+format-warn-underline = ${vars.u_temp_warm}
+format-warn = <label-warn>
+label-warn = "%temperature-c%"
+label-warn-font = 2
+
+[module/memory]
+type = internal/memory
+interval = 2
+
+format-prefix = " "
+format-prefix-foreground = ${vars.c_prefix}
+format-underline = ${vars.u_memory}
+
+label = %percentage_used%%
+
+[module/battery]
+type = internal/battery
+battery = BAT0
+adapter = AC
+full-at = 100
+
+format-charging-prefix = " "
+format-charging-prefix-foreground = ${vars.c_green}
+format-charging = <label-charging>
+format-charging-underline = ${vars.u_battery_charging}
+
+format-discharging-prefix-foreground = ${vars.c_orange}
+format-discharging = <ramp-capacity> <label-discharging>
+format-discharging-underline = ${vars.u_battery_discharging}
+
+format-full-prefix-foreground = ${vars.c_prefix}
+format-full = <ramp-capacity> <label-full>
+format-full-underline = ${vars.u_battery_full}
+
+ramp-capacity-0 = 
+ramp-capacity-1 = 
+ramp-capacity-2 = 
+ramp-capacity-3 = 
+ramp-capacity-4 = 
+
+[module/date]
+type = internal/date
+interval = 5
+
+date =
+date-alt = " %Y-%m-%d"
+
+time = "%I:%M %p"
+time-alt = ${self.time}
+
+format-prefix = ""
+format-prefix-foreground = ${vars.c_prefix}
+format-underline = ${vars.u_date}
+
+label = "%date% %{T2}%time%%{T-}"
+
+[module/power_draw]
+type = custom/script
+
+format-prefix = 
+format-prefix-foreground = ${vars.c_prefix}
+format-underline = ${vars.u_power_draw}
+
+label = "%output% W"
+
+exec = ~/bin/battery-info draw
+exec-if = ~/bin/battery-info draw
+interval = 2
