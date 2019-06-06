@@ -2,6 +2,7 @@
 
 import os
 import re
+import sys
 import json
 import subprocess
 
@@ -17,7 +18,7 @@ FILE_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 """
 
-def run_install(dry=False, sync_only=False, yes=False):
+def run_install(dry=False, sync_only=False, yes=False, force=False):
 	command = [
 		"xbps-install",
 		"--rootdir", ROOTDIR,
@@ -32,6 +33,9 @@ def run_install(dry=False, sync_only=False, yes=False):
 
 	if yes:
 		command.append("--yes")
+
+	if force:
+		command.append("--force")
 	
 	command.append("--sync")
 	if not sync_only:
@@ -103,9 +107,9 @@ def parse_requires(lines, packages=None):
 	
 	return packages
 
-def get_requires(requires_cache_path):
+def get_requires(requires_cache_path, force=False):
 	print("Obtaining list of install requirements")
-	dry_result = run_install(dry=True)
+	dry_result = run_install(dry=True, force=force)
 	if dry_result.returncode != 0:
 		raise RuntimeError("install dryrun returned {}\nstdout:\n{}".format(dry_result.returncode, dry_result.stdout))
 	lines = dry_result.stdout.splitlines()
@@ -173,7 +177,7 @@ def output_plist(path, requires):
 		print("</dict></plist>", file=file)
 
 
-def prepare():
+def prepare(force=False):
 	print("Preparing..")
 
 	os.makedirs(ROOTDIR, exist_ok=True)
@@ -182,27 +186,40 @@ def prepare():
 	lib32_path = os.path.join(ROOTDIR, "usr/lib32")
 	os.makedirs(lib_path, exist_ok=True)
 	os.makedirs(lib32_path, exist_ok=True)
-
-	os.symlink(lib_path, os.path.join(ROOTDIR, "lib"))
-	os.symlink(lib32_path, os.path.join(ROOTDIR, "lib32"))
+		
+	try:
+		os.symlink(lib_path, os.path.join(ROOTDIR, "lib"))
+	except FileExistsError:
+		pass
+	try:
+		os.symlink(lib32_path, os.path.join(ROOTDIR, "lib32"))
+	except FileExistsError:
+		pass
 
 	run_install(sync_only=True)
 
-	requires = get_requires(PACKAGE_REQUIREMENTS_CACHE)
+	requires = get_requires(PACKAGE_REQUIREMENTS_CACHE, force=force)
 
 	print("Creating plist")
 	plist_path = os.path.join(ROOTDIR, PLIST_PATH)
 	os.makedirs(os.path.dirname(plist_path), exist_ok=True)
 	output_plist(plist_path, requires)
 
-def install():
+def install(force=False):
 	print("Installing..")
 
-	result = run_install(yes=True)
+	result = run_install(yes=True, force=force)
 
 	print("Installation ended with code", result.returncode)
 	print("Installation stdout:")
 	print(result.stdout)
 
-prepare()
-install()
+def main():
+	force = False
+	if len(sys.argv) > 1 and sys.argv[1] == "force":
+		force = True
+
+	prepare(force=force)
+	install(force=force)
+
+main()
