@@ -16,6 +16,8 @@ blacklist nvidia-uv
 blacklist nouveau
 ```
 
+Note: I've had problems where the GPU was sometimes on even though the drivers were not loaded, a simple workaround is to run the `off.sh` script at boot.
+
 ### TL;DR
 If you don't want to change any paths or scripts:
 ```
@@ -50,7 +52,7 @@ This script prepares a fakeroot and uses xbps-install to install the `nvidia nvi
 
 This script also creates a fake xbps package database in `fakeroot/var/db/xbps/pkgdb-0.38.plist` to trick xbps into thinking all the required packages except for the nvidia driver ones are actually in the fakeroot. This is a **hack**, but it should work as long as the required packages are actually installed on your system.
 
-After running the python script, you will be prompted by `xbps-install` for confirmation, but all other `xbps-install` output will be only printed after the script ends.
+After running the python script, all output of `xbps-install` will only be printed after the script ends.
 
 ### xorg
 Now you need to create a valid xorg configuration somewhere in `/etc/X11` (for example `/etc/X11/nvidia`). Copy `xorg.conf` and `xorg.conf.d` there. If you installed your nvidia libraries in a different location, you will need to edit `xorg.conf` as well. Edit the lines:
@@ -95,7 +97,7 @@ After you have installed the nvidia libraries, set up your xorg config files and
 
 The script will start an X server and run your `XINITRC_PATH` script with the first argument passed from it and the second set to `nvidia` (so `./run.sh i3` will run `XINITRC_PATH i3 nvidia`).
 
-Your X session should now be running on NVIDIA card. This can be checked with programs such as `glmark2`. After closing that session, your nvidia card should power off.
+Your X session should now be running on NVIDIA card. This can be checked with programs such as `glmark2`. After closing that session, your nvidia card should power off. Beware that rebooting/powering off from within the WM session will **NOT** run the closing part of the script. The only real impact of this is that your Intel libGL libraries will be shadowed by NVIDIA ones. You can run `sudo ldconfig` afterwards to fix this (or just put it into the off script and run it on boot).
 
 ### More info
 * [nvidia-xrun](https://github.com/Witko/nvidia-xrun) - inspiration for `run.sh`
