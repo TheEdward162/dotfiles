@@ -1,0 +1,37 @@
+#!/usr/bin/bash
+
+function start() {
+	notify-send "DUNST_COMMAND_PAUSE"
+	killall compton > /dev/null
+}
+
+function _end() {
+	$HOME/bin/initscripts compton &
+	notify-send "DUNST_COMMAND_RESUME"
+	notify-send --app-name "Game mode" "Game mode" "Exiting game mode!"
+}
+function end() {
+	pgrep "compton" > /dev/null || _end
+}
+
+function toggle() {
+	pgrep "compton" > /dev/null && start || _end
+}
+
+if [ "$#" -gt "0" ]; then
+	case "$1" in
+		start|s)
+			start
+		;;
+
+		end|e)
+			end
+		;;
+
+		toggle|t)
+			toggle
+		;;
+	esac
+else
+	toggle
+fi

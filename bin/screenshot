@@ -1,0 +1,47 @@
+#!/bin/env bash
+
+save_path="$HOME/Pictures/Screenshots"
+pattern="%F_%T"
+
+cutout_path="$save_path"
+cutout_pattern="cutout"
+
+delay=200
+
+function full_shot() {
+	flameshot config --filename "$pattern"
+	flameshot full --path "$save_path" --delay "$delay"
+}
+
+function gui_shot() {
+	flameshot config --filename "$pattern"
+	flameshot gui --path "$save_path" --delay "$delay"
+}
+
+function cutout_shot() {
+	flameshot config --filename "$cutout_pattern"
+	# raw because it blocks until the shot is taken
+	flameshot gui --path "$cutout_path" --delay "$delay" --raw > /dev/null
+
+	feh --force-aliasing "${cutout_path}/${cutout_pattern}.png" &
+
+	sleep 0.2
+	$HOME/bin/stickywindow --class "feh" --width 500 --height 300 --anchor topright --yoffset 35
+	rm "${cutout_path}/${cutout_pattern}.png"
+}
+
+if [ "$#" -gt "0" ]; then
+	case "$1" in
+	f|full|fullscreen)
+		full_shot
+	;;
+	g|gui)
+		gui_shot
+	;;
+	c|cutout)
+		cutout_shot
+	;;
+	esac
+else
+	gui_shot
+fi

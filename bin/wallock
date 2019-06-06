@@ -1,0 +1,162 @@
+#!/bin/env bash
+
+FILE_PATH="/home/edward/bin/wallock"
+
+function start_xautolock() {
+	local locker_string="$FILE_PATH --xlock"
+	local killer_string="$FILE_PATH --killer"
+	local notifier_string="notify-send --app-name wallock --urgency critical --expire-time 9000 'Locker' 'The screen will be locked in 10 seconds.'"
+	
+#	local debug_file="/home/edward/Temporary/locker_start.log"
+
+	/usr/bin/xautolock -detectsleep \
+	-time 10 -locker "$locker_string" -nowlocker "$locker_string" \
+	-notify 10 -notifier "$notifier_string" -corners "0-00"
+
+	# -killtime 20 -killer "$killer_string" \
+}
+
+function _fix_lock() {
+	"$FILE_PATH" --start-locker &
+	sleep 0.1s
+	/usr/bin/xautolock -locknow
+}
+
+# this gets called with the argument --lock
+function lock() {
+	/usr/bin/xautolock -locknow || _fix_lock
+}
+
+function _gen_trying_quote() {
+	array[0]="Reticulating splines..."
+	array[1]="Counting bananas..."
+	array[2]="Calling the police..."
+	array[3]="Shuffling quotes..."
+	array[4]="Waking CPU..."
+	array[5]="Hacking FBI..."
+	array[6]="Initiating The Snap..."
+	array[7]="Locating Thanos..."
+	array[8]="Faking elections..."
+	array[9]="Buying fighter jets..."
+	array[10]="Bribing politicians..."
+	array[11]="Destroying dreams..."
+	array[12]="Killing Net Neutrality..."
+	array[13]="Running \"rm -rf ~\"..."
+	array[14]="Reading /dev/null..."
+	array[15]="Activating Death Star..."
+	array[16]="Summoning Cthulhu..."
+
+	size=${#array[@]}
+	index=$(($RANDOM % $size))
+	echo ${array[$index]}
+}
+
+function _lock_revert() {
+	xset dpms 0 0 0
+}
+
+# this gets called with the argument --xlock
+function actual_lock() {
+	local transparent="#00000000"
+	local white="#FFFFFFFF"
+	local text_color="#FFFFFFFF"
+	local verifying_color="#003AE6FF"
+	local right_color="#3AE600FF"
+	local wrong_color="#E6003AFF"
+	
+	local font_time="Gloria Hallelujah"
+	local font_date="Fira Mono"
+	local font_layout="Fira Mono"
+	# local font_verif="Raleway"
+	local font_verif="Fira Mono"
+	local font_wrong="Fira Mono"
+
+	local quote=$(_gen_trying_quote)
+
+	trap _lock_revert HUP INT TERM
+    xset +dpms dpms 5 5 5
+
+	i3lock \
+	--nofork \
+	--ignore-empty-password \
+	\
+	--insidevercolor=$transparent \
+	--ringvercolor=$verifying_color \
+	--insidewrongcolor=$transparent \
+	--ringwrongcolor=$wrong_color \
+	\
+	--insidecolor=$transparent \
+	--ringcolor=$transparent \
+	--separatorcolor=$transparent \
+	--linecolor=$transparent \
+	\
+	--timecolor=$right_color \
+	--datecolor=$text_color	\
+	--keyhlcolor=$text_color \
+	--bshlcolor=$text_color	\
+	--verifcolor=$text_color \
+	--wrongcolor=$text_color \
+	\
+	--time-font="$font_time" \
+	--timesize=60 \
+	--date-font="$font_date" \
+	--datesize=20 \
+	--layout-font="$font_layout" \
+	--verif-font="$font_verif" \
+	--verifsize=23 \
+	--wrong-font="$font_wrong" \
+	\
+	--blur 5 \
+	--clock \
+	--indicator \
+	--radius 180 \
+	--ring-width 6 \
+	--timestr="%H:%M:%S" \
+	--datestr="%A, %d. %B %Y" \
+	\
+	--veriftext="$quote" \
+	--wrongtext="Sorry, not sorry"
+
+	_lock_revert
+}
+
+function set_wallpaper() {
+	if [ "$#" -gt "0" ]; then
+		local w_path=$1
+
+		feh --bg-scale "$w_path"
+	else
+		help
+	fi
+}
+
+function help() {
+	echo "wallock:
+	-h --help			show this help
+	   --start-locker	start the xautolock process
+	-l --lock			lock system by calling xautolock -locknow
+	   --xlock			actually invoke the locker, this is called by xautolock when locking
+	   --killer			run killer task, this is called by xautolock when it's time to kill"
+}
+
+if [ "$#" -gt "0" ]; then
+	case "$1" in
+	--start-locker)
+		start_xautolock
+	;;
+	-l|--lock)
+		lock
+	;;
+	--xlock)
+		actual_lock
+	;;
+	--killer)
+		# TODO
+	;;
+	*)
+		help
+	;;
+	esac
+else
+	help
+fi

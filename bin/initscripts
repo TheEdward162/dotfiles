@@ -1,0 +1,65 @@
+#!/bin/env bash
+
+if [[ $# -gt 0 ]]; then
+	case "$1" in
+		mpd)
+			if ! pgrep -u $UID -x mpd >/dev/null; then
+				mpd > /dev/null 2>&1
+			fi
+		;;
+
+		wm)
+			wm=${2:-i3}
+
+			echo "Launching wm $wm..."
+			"$wm"
+			unset wm
+		;;
+
+		wmcommon)
+			start-pulseaudio-x11
+			numlockx &
+			/usr/libexec/polkit-mate-authentication-agent-1 &
+
+			$HOME/bin/initscripts locker &
+			$HOME/bin/initscripts polybar &
+			$HOME/bin/initscripts unclutter &
+			$HOME/bin/initscripts mpcwatch &
+			$HOME/bin/initscripts nmapplet &
+			$HOME/bin/initscripts compton &
+		;;
+
+		locker)
+			$HOME/bin/wallock --start-locker
+		;;
+
+
+		polybar)
+			killall -q polybar
+			# Wait until the processes have been shut down
+			while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
+
+			polybar main
+		;;
+
+		nmapplet)
+			nm-applet
+		;;
+
+		unclutter)
+			unclutter -idle 3
+		;;
+
+		mpcwatch)
+			while [ 1 ]; do
+				mpc idle player > /dev/null
+				sleep 0.1s
+				$HOME/bin/notify-info music
+			done
+		;;
+
+		compton)
+			compton --config $HOME/.config/compton/compton.conf
+		;;
+	esac
+fi

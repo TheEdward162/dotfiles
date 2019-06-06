@@ -1,0 +1,26 @@
+#!/usr/bin/bash
+
+function mount_smb() {
+	echo "Mounting /mnt/smb..."
+	mount --target /mnt/smb --type ntfs-3g --uuid 3A60B26160B22393 --options rw,nosuid,nodev,relatime,user_id=0,group_id=0,allow_other ||
+	mount --target /mnt/smb --type cifs --options vers=1.0,credentials=/home/edward/.config/smb/credentials //192.168.0.1/Maxtor
+}
+
+function dismount_smb() {
+	echo "Dismounting /mnt/smb..."
+	umount /mnt/smb
+}
+
+if [ "$#" -gt "0" ]; then
+	case "$1" in
+	mount|m)
+		mount_smb
+	;;
+
+	umount|dismount|u)
+		dismount_smb
+	;;
+	esac
+else
+	mount_smb
+fi
