@@ -1,0 +1,74 @@
+#!/bin/env bash
+
+SELF_FILE="$HOME/bin/action-launcher"
+
+choices="System - Battery Info
+System - Storage Spindown
+Funk - MusicPC Insert
+Screenshot - Selection
+Screenshot - Clipboard
+Sticky Window
+Game Mode"
+
+run_action() {
+	local action="$1"
+
+	case "$action" in
+		"Lock")
+			$HOME/bin/wallock --lock
+		;;
+		"Lock and Suspend")
+			$HOME/bin/wallock --lock
+			sleep 0.5s
+			suspend
+		;;
+		"Shutdown/Poweroff")
+			poweroff
+		;;
+		"Reboot")
+			reboot
+		;;
+
+		"System - Battery Info")
+			info=$($HOME/bin/battery-info)
+			rofi -width 350 -e "$info"
+		;;
+		"System - Storage Spindown")
+			sudo $HOME/bin/storage-spindown
+		;;
+
+		"Funk - MusicPC Insert")
+			$HOME/bin/mpc-insert
+		;;
+
+		"Screenshot - Selection")
+			$HOME/bin/screenshot selection
+		;;
+		"Screenshot - Clipboard")
+			$HOME/bin/screenshot clipboard
+		;;
+
+		"Game Mode")
+			$HOME/bin/game-mode
+		;;
+	esac
+}
+
+if [[ $# -eq 0 ]]; then
+	echo "$choices"
+else
+	case "$1" in
+		"launcher")
+			rofi -combi-modi window,drun,run -show combi -i -modi combi
+		;;
+
+		"actions")
+			action=$(rofi -i -p Action -dmenu <<< $choices)
+			run_action "$action"
+		;;
+
+		*)
+			run_action "$@"
+		;;
+	esac
+fi
