@@ -52,8 +52,6 @@ This script prepares a fakeroot and uses xbps-install to install the `nvidia nvi
 
 This script also creates a fake xbps package database in `fakeroot/var/db/xbps/pkgdb-0.38.plist` to trick xbps into thinking all the required packages except for the nvidia driver ones are actually in the fakeroot. This is a **hack**, but it should work as long as the required packages are actually installed on your system.
 
-After running the python script, all output of `xbps-install` will only be printed after the script ends.
-
 ### xorg
 Now you need to create a valid xorg configuration somewhere in `/etc/X11` (for example `/etc/X11/nvidia`). Copy `xorg.conf` and `xorg.conf.d` there. If you installed your nvidia libraries in a different location, you will need to edit `xorg.conf` as well. Edit the lines:
 ```
