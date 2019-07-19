@@ -6,19 +6,39 @@ import sys
 import json
 import subprocess
 
-RE_PKGNAME = re.compile(r"^([a-zA-Z1-9_.+-]+?)-([0-9._-]+)\s")
+RE_PKGNAME = re.compile(r"^([a-zA-Z1-9_.+-]+?)-([0-9._-]+)\sinstall")
 
 PACKAGES = ["nvidia", "nvidia-libs", "nvidia-libs-32bit"]
 PACKAGE_REQUIREMENTS_CACHE = "requirements_cache.json"
 
-ROOTDIR = "/opt/nvidia/fakeroot"
+ROOTDIR = "/opt/nvidia/fakeroot2"
 PLIST_PATH = "var/db/xbps/pkgdb-0.38.plist"
 
 FILE_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 """
 
-def run_install(dry=False, sync_only=False, yes=False, force=False):
+def run_command(command, capture = False):
+	print()
+	print("Running command: ", " ".join(command))
+	process = subprocess.Popen(command, universal_newlines = True, stdout = subprocess.PIPE)
+
+	stdout = []
+	print()
+	print("Command stdout:")
+	for line in iter(process.stdout.readline, ""):
+		if capture:
+			stdout.append(line)
+		
+		print(line, end = "")
+	process.stdout.close()
+
+	return {
+		"returncode": process.wait(),
+		"stdout": stdout
+	}
+
+def run_install(dry = False, sync_only = False, yes = False, force = False, capture = False):
 	command = [
 		"xbps-install",
 		"--rootdir", ROOTDIR,
@@ -42,17 +62,14 @@ def run_install(dry=False, sync_only=False, yes=False, force=False):
 		for package in PACKAGES:
 			command.append(package)
 
-	result = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE)
-	return result
+	return run_command(command, capture = capture)
 
 
 def get_shlib(package):
 	print("Obtaining shlib-requires and -provides for", package)
+	result = run_command(["xbps-query", "-R", package], capture = True)
 
-	command = ["xbps-query", "-R", package]
-	result = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE)
-
-	if result.returncode != 0:
+	if result["returncode"] != 0:
 		return None
 	
 	shlib_provides = []
@@ -61,8 +78,7 @@ def get_shlib(package):
 	shlib_requires = []
 	shlib_requires_going = False
 
-	lines = result.stdout.splitlines()
-	for line in lines:
+	for line in result["stdout"]:
 		if shlib_provides_going and not line[0].isspace():
 			shlib_provides_going = False
 		elif shlib_requires_going and not line[0].isspace():
@@ -88,7 +104,9 @@ def parse_requires(lines, packages=None):
 		line = line.strip()
 		match = RE_PKGNAME.match(line)
 		if match is None:
-			raise RuntimeError("line doesn't match regex {}".format(line))
+			# raise RuntimeError("line doesn't match regex {}".format(line))
+			print("Unexpected line in required packages:", line)
+			continue
 		
 		pkg_name = match.group(1)
 		pkg_ver = match.group(2)
@@ -107,12 +125,12 @@ def parse_requires(lines, packages=None):
 	
 	return packages
 
-def get_requires(requires_cache_path, force=False):
+def get_requires(requires_cache_path):
 	print("Obtaining list of install requirements")
-	dry_result = run_install(dry=True, force=force)
-	if dry_result.returncode != 0:
-		raise RuntimeError("install dryrun returned {}\nstdout:\n{}".format(dry_result.returncode, dry_result.stdout))
-	lines = dry_result.stdout.splitlines()
+	dry_result = run_install(dry = True, force = True, capture = True)
+
+	if dry_result["returncode"] != 0:
+		raise RuntimeError("install dryrun returned", dry_result["returncode"])
 
 	print("Attempting to load requirements cache")
 	packages = None
@@ -122,10 +140,10 @@ def get_requires(requires_cache_path, force=False):
 	except json.JSONDecodeError:
 		print("Load failed, file is not a valid json file")
 	except FileNotFoundError:
-		print("Load failes, file not found")
+		print("Load failed, file not found")
 
 	print("Parsing install requirements..")
-	packages = parse_requires(lines, packages)
+	packages = parse_requires(dry_result["stdout"], packages)
 
 	print("Saving requirements cache")
 	with open(requires_cache_path, "w") as file:
@@ -177,7 +195,7 @@ def output_plist(path, requires):
 		print("</dict></plist>", file=file)
 
 
-def prepare(force=False):
+def prepare():
 	print("Preparing..")
 
 	os.makedirs(ROOTDIR, exist_ok=True)
@@ -196,9 +214,8 @@ def prepare(force=False):
 	except FileExistsError:
 		pass
 
-	run_install(sync_only=True)
-
-	requires = get_requires(PACKAGE_REQUIREMENTS_CACHE, force=force)
+	run_install(sync_only = True)
+	requires = get_requires(PACKAGE_REQUIREMENTS_CACHE)
 
 	print("Creating plist")
 	plist_path = os.path.join(ROOTDIR, PLIST_PATH)
@@ -208,18 +225,16 @@ def prepare(force=False):
 def install(force=False):
 	print("Installing..")
 
-	result = run_install(yes=True, force=force)
+	result = run_install(yes = True, force = force)
 
-	print("Installation ended with code", result.returncode)
-	print("Installation stdout:")
-	print(result.stdout)
+	print("Installation ended with code", result["returncode"])
 
 def main():
 	force = False
 	if len(sys.argv) > 1 and sys.argv[1] == "force":
 		force = True
 
-	prepare(force=force)
+	prepare()
 	install(force=force)
 
 main()
