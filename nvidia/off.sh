@@ -12,4 +12,7 @@ modprobe -r nvidia
 
 tee "$DEVICE_PATH/$DEVICE/power/control" <<< auto
 
+# ensure that ldconfig is reloaded
+ldconfig
+
 echo ""
