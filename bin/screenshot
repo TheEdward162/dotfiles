@@ -1,47 +1,126 @@
 #!/bin/env bash
 
-save_path="$HOME/Pictures/Screenshots"
-pattern="%F_%T"
+function capture_wayland() {
+	local select="$1"
+	local clip="$2"
 
-cutout_path="$save_path"
-cutout_pattern="cutout"
+	local output="$3"
 
-delay=200
+	local command="grim"
 
-function full_shot() {
-	flameshot config --filename "$pattern"
-	flameshot full --path "$save_path" --delay "$delay"
+	if [[ -n $output ]]; then
+		command="$command -o $output"
+	fi
+
+	if [[ -n $select  &&  $select -ne 0 ]]; then
+		local geometry=$(slurp -c "#E6003A")
+		command="$command -g '$geometry'"
+	fi
+
+	if [[ -n $clip && $select -ne 0 ]]; then
+		command="$command - | wl-copy"
+	else
+		local out_path="$(xdg-user-dir PICTURES)/Screenshots/$(date +'%Y-%m-%d_%H%M%S').png"
+		command="$command $out_path"
+	fi
+
+	echo "$command"
+	eval "$command"
 }
 
-function gui_shot() {
-	flameshot config --filename "$pattern"
-	flameshot gui --path "$save_path" --delay "$delay"
+function capture_x11() {
+	local select="$1"
+	local clip="$2"
+	
+	local path="$3"
+	local pattern="$4"
+	local block="$5"
+
+	local delay=200
+
+	if [[ -n $pattern ]]; then
+		flameshot config --filename "$pattern"
+	fi
+
+	local mode="full"
+	if [[ -n $select && $select -ne 0 ]]; then
+		mode="gui"
+	fi
+
+	local command="flameshot $mode --delay $delay"
+	
+	if [[ -n $path ]]; then
+		command="$command --path '$path'"
+	fi
+
+	if [[ (-n $block && $block -ne 0) || (-n $clip && $clip -ne 0) ]]; then
+		command="$command --raw"
+	fi
+
+	if [[ -n $clip && $clip -ne 0 ]]; then
+		command="$command | xclip"
+	else
+		command="$command > /dev/null"
+	fi
+
+	echo "$command"
+	eval "$command"
 }
 
-function cutout_shot() {
-	flameshot config --filename "$cutout_pattern"
-	# raw because it blocks until the shot is taken
-	flameshot gui --path "$cutout_path" --delay "$delay" --raw > /dev/null
+function main() {
+	if [[ -n $WAYLAND_DISPLAY ]]; then
+		if [[ "$#" -gt "0" ]]; then
+			case "$1" in
+				f|full|fullscreen)
+					capture_wayland
+				;;
+				s|selection)
+					capture_wayland 1
+				;;
+				c|clipboard)
+					capture_wayland 1 1
+				;;
 
-	feh --force-aliasing "${cutout_path}/${cutout_pattern}.png" &
+				*)
+					capture_wayland "$@"
+				;;
+			esac
+		else
+			capture_wayland 
+		fi
+	else
+		local save_path="$HOME/Pictures/Screenshots"
+		if [[ "$#" -gt "0" ]]; then
+			case "$1" in
+				f|full|fullscreen)
+					capture_x11 0 0 "$save_path" "%F_%T"
+				;;
+				s|selection)
+					capture_x11 1 0 "$save_path" "%F_%T"
+				;;
+				
+				c|clipboard)
+					capture_x11 1 1
+				;;
 
-	sleep 0.2
-	$HOME/bin/stickywindow --class "feh" --width 500 --height 300 --anchor topright --yoffset 35
-	rm "${cutout_path}/${cutout_pattern}.png"
+				cutout)
+					capture_x11 1 0 "$save_path" "cutout" 1
+
+					feh --force-aliasing "$save_path/cutout.png" &
+
+					sleep 0.5
+					$HOME/bin/stickywindow --class "feh" --width 500 --height 300 --anchor topright --yoffset 35
+					rm "$save_path/cutout.png"
+				;;
+
+				*)
+					capture_x11 "$@"
+				;;
+			esac
+		else
+			capture_x11 0 0 "$save_path" "%F_%T"
+		fi
+	fi
 }
 
-if [ "$#" -gt "0" ]; then
-	case "$1" in
-	f|full|fullscreen)
-		full_shot
-	;;
-	g|gui)
-		gui_shot
-	;;
-	c|cutout)
-		cutout_shot
-	;;
-	esac
-else
-	gui_shot
-fi
+main "$@"

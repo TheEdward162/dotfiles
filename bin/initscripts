@@ -1,65 +1,95 @@
 #!/bin/env bash
 
-if [[ $# -gt 0 ]]; then
-	case "$1" in
-		mpd)
-			if ! pgrep -u $UID -x mpd >/dev/null; then
-				mpd > /dev/null 2>&1
-			fi
-		;;
+LOG="/dev/null"
 
-		wm)
-			wm=${2:-i3}
+function kill_run() {
+	local command=$1
+	local search=${2:-$command}
 
-			echo "Launching wm $wm..."
-			"$wm"
-			unset wm
-		;;
+	local full=${3:-1}
+	local exact=${4:-1}
 
-		wmcommon)
-			start-pulseaudio-x11
-			numlockx &
-			/usr/libexec/polkit-mate-authentication-agent-1 &
+	echo "kill_run $command ($search) [${full}${exact}]" >> "$LOG"
+	
+	local base_command="--uid $UID \"$search\""
+	if [[ -n $full && $full -ne 0 ]]; then
+		base_command="$base_command --full"
+	fi
+	if [[ -n $exact && $exact -ne 0 ]]; then
+		base_command="$base_command --exact"
+	fi
 
-			$HOME/bin/initscripts locker &
-			$HOME/bin/initscripts polybar &
-			$HOME/bin/initscripts unclutter &
-			$HOME/bin/initscripts mpcwatch &
-			$HOME/bin/initscripts nmapplet &
-			$HOME/bin/initscripts compton &
-		;;
+	local kill_command="pkill $base_command"
+	local grep_command="pgrep $base_command"
 
-		locker)
-			$HOME/bin/wallock --start-locker
-		;;
+	# Wait until the processes have been shut down
+	while eval "$grep_command" > /dev/null; do
+		eval "$kill_command"
+		sleep 0.5s
+	done
+	
+	echo "Executing $command" >> "$LOG"
+	eval "$command"
+}
 
+function main() {
+	if [[ $# -gt 0 ]]; then
+		case "$1" in
+			wm)
+				local wm=${2:-i3}
 
-		polybar)
-			killall -q polybar
-			# Wait until the processes have been shut down
-			while pgrep -u $UID -x polybar >/dev/null; do sleep 1; done
+				echo "Launching wm $wm..." > "$LOG"
+				cd # cd to home, this avoids having terminals open in unexpected locations
+				ck-launch-session dbus-launch --exit-with-session "$wm" "${@:3}"
+			;;
 
-			polybar main
-		;;
+			wmcommon)
+				kill_run "/usr/libexec/polkit-mate-authentication-agent-1" &
+				
+				$HOME/bin/wallock start &
 
-		nmapplet)
-			nm-applet
-		;;
+				if [[ -n $WAYLAND_DISPLAY ]]; then
+					kill_run mako &
+				else
+					start-pulseaudio-x11
+					
+					numlockx
+					kill_run nm-applet &
+					kill_run "unclutter -idle 3" &
+					$HOME/bin/initscripts compton &
+				fi
 
-		unclutter)
-			unclutter -idle 3
-		;;
+				$HOME/bin/initscripts statusbar &
+				$HOME/bin/initscripts mpcwatch &
+			;;
 
-		mpcwatch)
-			while [ 1 ]; do
-				mpc idle player > /dev/null
-				sleep 0.1s
-				$HOME/bin/notify-info music
-			done
-		;;
+			statusbar)
+				if [[ -n $WAYLAND_DISPLAY ]]; then
+					kill_run waybar
+				else
+					kill_run "polybar main"
+				fi
+			;;
 
-		compton)
-			compton --config $HOME/.config/compton/compton.conf
-		;;
-	esac
-fi
+			mpd)
+				kill_run mpd "" 0 1
+			;;
+
+			mpcwatch)
+				if ! pgrep --uid $UID --full --exact "mpc idle player" > /dev/null; then
+					while [[ 1 ]]; do
+						mpc idle player > /dev/null
+						sleep 0.1s
+						$HOME/bin/notify-info music
+					done
+				fi
+			;;
+
+			compton)
+				kill_run "compton --config $HOME/.config/compton/compton.conf" compton 0 1
+			;;
+		esac
+	fi
+}
+
+main "$@"

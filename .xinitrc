@@ -44,5 +44,4 @@ if [ "$2" = "nvidia" ]; then
 fi
 
 cd $HOME
-# TODO: Maybe store the output somewhere instead
-exec ck-launch-session dbus-launch --exit-with-session $HOME/bin/initscripts wm "$1" >/dev/null 2>&1
+exec $HOME/bin/initscripts wm "$1"

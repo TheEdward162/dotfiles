@@ -1,62 +1,58 @@
 #!/bin/env bash
 
-FILE_PATH="/home/edward/bin/wallock"
-
-function start_xautolock() {
-	local locker_string="$FILE_PATH --xlock"
-	local killer_string="$FILE_PATH --killer"
-	local notifier_string="notify-send --app-name wallock --urgency critical --expire-time 9000 'Locker' 'The screen will be locked in 10 seconds.'"
-	
-#	local debug_file="/home/edward/Temporary/locker_start.log"
-
-	/usr/bin/xautolock -detectsleep \
-	-time 10 -locker "$locker_string" -nowlocker "$locker_string" \
-	-notify 10 -notifier "$notifier_string" -corners "0-00"
-
-	# -killtime 20 -killer "$killer_string" \
-}
-
-function _fix_lock() {
-	"$FILE_PATH" --start-locker &
-	sleep 0.1s
-	/usr/bin/xautolock -locknow
-}
-
-# this gets called with the argument --lock
-function lock() {
-	/usr/bin/xautolock -locknow || _fix_lock
-}
+NOTIFIER="notify-send --app-name wallock --urgency critical --expire-time 9000 'Locker' 'The screen will be locked in 10 seconds.'"
+IMAGE_PATH="$(xdg-user-dir PICTURES)/locker.png"
 
 function _gen_trying_quote() {
 	array[0]="Reticulating splines..."
-	array[1]="Counting bananas..."
+	array[1]="Factoring primes..."
 	array[2]="Calling the police..."
 	array[3]="Shuffling quotes..."
-	array[4]="Waking CPU..."
+	array[4]="Extinguishing CPU..."
 	array[5]="Hacking FBI..."
 	array[6]="Initiating The Snap..."
-	array[7]="Locating Thanos..."
-	array[8]="Faking elections..."
-	array[9]="Buying fighter jets..."
-	array[10]="Bribing politicians..."
-	array[11]="Destroying dreams..."
-	array[12]="Killing Net Neutrality..."
-	array[13]="Running \"rm -rf ~\"..."
-	array[14]="Reading /dev/null..."
-	array[15]="Activating Death Star..."
-	array[16]="Summoning Cthulhu..."
+	array[7]="Faking elections..."
+	array[8]="Buying fighter jets..."
+	array[9]="Bribing politicians..."
+	array[10]="Destroying dreams..."
+	array[11]="Killing Net Neutrality..."
+	array[12]="Running \"rm -rf ~\"..."
+	array[13]="Reading /dev/null..."
+	array[14]="Activating Death Star..."
+	array[15]="Summoning Cthulhu..."
 
 	size=${#array[@]}
 	index=$(($RANDOM % $size))
 	echo ${array[$index]}
 }
 
-function _lock_revert() {
-	xset dpms 0 0 0
+function sway_start_idle() {
+	local lock_command="wallock lock"
+	
+	swayidle -w \
+		before-sleep "wallock lock" \
+		timeout 290 "$NOTIFIER" \
+		timeout 300 "wallock lock" \
+		resume "wallock resume"
+}
+
+function x_start_idle() {
+	local locker_string="wallock xlock"
+	local killer_string="wallock kill"
+
+	xautolock -detectsleep\
+		-time 10 -locker "$locker_string" -nowlocker "$locker_string" \
+		-notify 10 -notifier "$NOTIFIER" -corners "0-00"
+}
+
+function x_fix_lock() {
+	wallock start &
+	sleep 0.1s
+	xautolock -locknow
 }
 
 # this gets called with the argument --xlock
-function actual_lock() {
+function x_lock() {
 	local transparent="#00000000"
 	local white="#FFFFFFFF"
 	local text_color="#FFFFFFFF"
@@ -67,13 +63,12 @@ function actual_lock() {
 	local font_time="Gloria Hallelujah"
 	local font_date="Fira Mono"
 	local font_layout="Fira Mono"
-	# local font_verif="Raleway"
 	local font_verif="Fira Mono"
 	local font_wrong="Fira Mono"
 
 	local quote=$(_gen_trying_quote)
 
-	trap _lock_revert HUP INT TERM
+	trap "wallock resume" HUP INT TERM
     xset +dpms dpms 5 5 5
 
 	i3lock \
@@ -117,46 +112,64 @@ function actual_lock() {
 	--veriftext="$quote" \
 	--wrongtext="Sorry, not sorry"
 
-	_lock_revert
+	wallock resume
 }
 
-function set_wallpaper() {
-	if [ "$#" -gt "0" ]; then
-		local w_path=$1
-
-		feh --bg-scale "$w_path"
-	else
-		help
-	fi
-}
-
-function help() {
-	echo "wallock:
-	-h --help			show this help
-	   --start-locker	start the xautolock process
-	-l --lock			lock system by calling xautolock -locknow
-	   --xlock			actually invoke the locker, this is called by xautolock when locking
-	   --killer			run killer task, this is called by xautolock when it's time to kill"
-}
-
-if [ "$#" -gt "0" ]; then
+function wayland_main() {
 	case "$1" in
-	--start-locker)
-		start_xautolock
-	;;
-	-l|--lock)
-		lock
-	;;
-	--xlock)
-		actual_lock
-	;;
-	--killer)
-		# TODO
-	;;
-	*)
-		help
-	;;
+		start)
+			sway_start_idle
+		;;
+
+		lock)
+			# grim takes a screenshot of the whole screen and scales it to 20% size
+			# then magick adds a black border around and blurs the image
+			# this is both fast and not absolutely ugly
+			grim -s 0.2 - | magick convert - -bordercolor "#000" -border 1 -blur 1x1 "$IMAGE_PATH"
+			swaylock
+			# swaymsg "output * dpms off" # TODO: Subsequent on doesn't work
+		;;
+
+		resume)
+			swaymsg "output * dpms on"
+		;;
+
+		kill)
+			# TODO
+		;;
+
+		xlock)
+			wallock lock
+		;;
 	esac
+}
+
+function x_main() {
+	case "$1" in
+		start)
+			x_start_idle
+		;;
+
+		lock)
+			/usr/bin/xautolock -locknow || x_fix_lock
+		;;
+
+		resume)
+			xset dpms 0 0 0
+		;;
+
+		kill)
+			# TODO
+		;;
+
+		xlock)
+			x_lock
+		;;
+	esac
+}
+
+if [[ -n $WAYLAND_DISPLAY ]]; then
+	wayland_main "$@"
 else
-	help
+	x_main "$@"
 fi
