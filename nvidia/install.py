@@ -11,7 +11,7 @@ RE_PKGNAME = re.compile(r"^([a-zA-Z1-9_.+-]+?)-([0-9._-]+)\sinstall")
 PACKAGES = ["nvidia", "nvidia-libs", "nvidia-libs-32bit"]
 PACKAGE_REQUIREMENTS_CACHE = "requirements_cache.json"
 
-ROOTDIR = "/opt/nvidia/fakeroot2"
+ROOTDIR = "/opt/nvidia/fakeroot"
 PLIST_PATH = "var/db/xbps/pkgdb-0.38.plist"
 
 FILE_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
@@ -20,7 +20,7 @@ FILE_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
 
 def run_command(command, capture = False):
 	print()
-	print("Running command: ", " ".join(command))
+	print("Running command:", " ".join(command))
 	process = subprocess.Popen(command, universal_newlines = True, stdout = subprocess.PIPE)
 
 	stdout = []
@@ -96,7 +96,7 @@ def get_shlib(package):
 	
 	return shlib_provides, shlib_requires
 
-def parse_requires(lines, packages=None):
+def parse_requires(lines, packages = None):
 	if packages is None:
 		packages = {}
 
@@ -126,13 +126,13 @@ def parse_requires(lines, packages=None):
 	return packages
 
 def get_requires(requires_cache_path):
-	print("Obtaining list of install requirements")
+	print("Obtaining list of install requirements...")
 	dry_result = run_install(dry = True, force = True, capture = True)
 
 	if dry_result["returncode"] != 0:
 		raise RuntimeError("install dryrun returned", dry_result["returncode"])
 
-	print("Attempting to load requirements cache")
+	print("Attempting to load requirements cache...")
 	packages = None
 	try:
 		with open(requires_cache_path, "r") as file:
@@ -142,10 +142,10 @@ def get_requires(requires_cache_path):
 	except FileNotFoundError:
 		print("Load failed, file not found")
 
-	print("Parsing install requirements..")
+	print("Parsing install requirements...")
 	packages = parse_requires(dry_result["stdout"], packages)
 
-	print("Saving requirements cache")
+	print("Saving requirements cache...")
 	with open(requires_cache_path, "w") as file:
 		json.dump(packages, file)
 
@@ -156,54 +156,54 @@ def generate_plist(requires, file):
 	for pkg_name in requires:
 		req = requires[pkg_name]
 
-		print("\t<key>{}</key>".format(pkg_name), file=file)
-		print("\t<dict>", file=file)
+		print("\t<key>{}</key>".format(pkg_name), file = file)
+		print("\t<dict>", file = file)
 
-		print("\t\t<key>pkgver</key>", file=file)
-		print("\t\t<string>{}-{}</string>".format(pkg_name, req["version"]), file=file)
+		print("\t\t<key>pkgver</key>", file = file)
+		print("\t\t<string>{}-{}</string>".format(pkg_name, req["version"]), file = file)
 
 		if len(req["shlib-provides"]) > 0:
-			print("\t\t<key>shlib-provides</key>", file=file)
-			print("\t\t<array>", file=file)
+			print("\t\t<key>shlib-provides</key>", file = file)
+			print("\t\t<array>", file = file)
 
 			for sh_prov in req["shlib-provides"]:
-				print("\t\t\t<string>{}</string>".format(sh_prov), file=file)
+				print("\t\t\t<string>{}</string>".format(sh_prov), file = file)
 
-			print("\t\t</array>", file=file)
+			print("\t\t</array>", file = file)
 
 		if len(req["shlib-requires"]) > 0:
-			print("\t\t<key>shlib-requires</key>", file=file)
-			print("\t\t<array>", file=file)
+			print("\t\t<key>shlib-requires</key>", file = file)
+			print("\t\t<array>", file = file)
 
 			for sh_req in req["shlib-requires"]:
-				print("\t\t\t<string>{}</string>".format(sh_req), file=file)
+				print("\t\t\t<string>{}</string>".format(sh_req), file = file)
 
-			print("\t\t</array>", file=file)
+			print("\t\t</array>", file = file)
 
-		print("\t\t<key>state</key>", file=file)
-		print("\t\t<string>installed</string>", file=file)
+		print("\t\t<key>state</key>", file = file)
+		print("\t\t<string>installed</string>", file = file)
 
-		print("\t</dict>", file=file)
+		print("\t</dict>", file = file)
 
 def output_plist(path, requires):
 	with open(path, "w") as file:
-		print(FILE_HEADER, file=file, end="")
-		print("<plist version=\"1.0\"><dict>", file=file)
+		print(FILE_HEADER, file = file, end = "")
+		print("<plist version=\"1.0\"><dict>", file = file)
 
 		generate_plist(requires, file)
 
-		print("</dict></plist>", file=file)
+		print("</dict></plist>", file = file)
 
 
 def prepare():
-	print("Preparing..")
+	print("Preparing...")
 
-	os.makedirs(ROOTDIR, exist_ok=True)
+	os.makedirs(ROOTDIR, exist_ok = True)
 	
 	lib_path = os.path.join(ROOTDIR, "usr/lib")
 	lib32_path = os.path.join(ROOTDIR, "usr/lib32")
-	os.makedirs(lib_path, exist_ok=True)
-	os.makedirs(lib32_path, exist_ok=True)
+	os.makedirs(lib_path, exist_ok = True)
+	os.makedirs(lib32_path, exist_ok = True)
 		
 	try:
 		os.symlink(lib_path, os.path.join(ROOTDIR, "lib"))
@@ -214,16 +214,22 @@ def prepare():
 	except FileExistsError:
 		pass
 
+	print("Removing plist...")
+	plist_path = os.path.join(ROOTDIR, PLIST_PATH)
+	try:
+		os.remove(plist_path)
+	except OSError as e:
+		print("Could not remove plist:", e)
+
 	run_install(sync_only = True)
 	requires = get_requires(PACKAGE_REQUIREMENTS_CACHE)
 
-	print("Creating plist")
-	plist_path = os.path.join(ROOTDIR, PLIST_PATH)
-	os.makedirs(os.path.dirname(plist_path), exist_ok=True)
+	print("Creating plist...")
+	os.makedirs(os.path.dirname(plist_path), exist_ok = True)
 	output_plist(plist_path, requires)
 
-def install(force=False):
-	print("Installing..")
+def install(force = False):
+	print("Installing...")
 
 	result = run_install(yes = True, force = force)
 
@@ -235,6 +241,6 @@ def main():
 		force = True
 
 	prepare()
-	install(force=force)
+	install(force = force)
 
 main()
