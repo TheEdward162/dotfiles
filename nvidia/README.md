@@ -95,7 +95,10 @@ After you have installed the nvidia libraries, set up your xorg config files and
 
 The script will start an X server and run your `XINITRC_PATH` script with the first argument passed from it and the second set to `nvidia` (so `./run.sh i3` will run `XINITRC_PATH i3 nvidia`).
 
-Your X session should now be running on NVIDIA card. This can be checked with programs such as `glmark2`. After closing that session, your nvidia card should power off. Beware that rebooting/powering off from within the WM session will **NOT** run the closing part of the script. The only real impact of this is that your Intel libGL libraries will be shadowed by NVIDIA ones. You can run `sudo ldconfig` afterwards to fix this (or just put it into the off script and run it on boot).
+Your X session should now be running on NVIDIA card. This can be checked with programs such as `glmark2`. After closing that session, your nvidia card should power off. Beware that rebooting/powering off from within the WM session will **NOT** run the closing part of the script. The only real impact of this is that your Intel libGL libraries will be shadowed by NVIDIA ones. You can run `sudo ldconfig` afterwards to fix this (or just run the `off.sh` script at boot).
+
+### off.sh
+Small script that performs steps to ensure that the NVIDIA Gpu is off and that correct `ldconfig` is loaded. Run this as root at boot.
 
 ### More info
 * [nvidia-xrun](https://github.com/Witko/nvidia-xrun) - inspiration for `run.sh`
