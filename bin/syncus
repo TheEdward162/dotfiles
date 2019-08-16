@@ -1,0 +1,70 @@
+#!/bin/bash
+
+set -x
+
+DEFAULT_HOST="192.168.1.100"
+DEFAULT_PORT=4142
+DEFAULT_USER="edward"
+
+function build_rsync() {
+	local SOURCE=${1}
+	local DESTINATION=${2:-.}
+
+	local PORT=${3:-$DEFAULT_PORT}
+
+	if [ -z $SOURCE ]; then
+		exit 404
+	fi
+
+	rsync --archive --update --one-file-system --progress --stats --rsh "ssh -p $PORT -T -o Compression=no -x" "$SOURCE" "$DESTINATION"
+}
+
+function build_rsync_to_local() {
+	local SOURCE=${1}
+	local DESTINATION=${2}
+	
+	local HOST=${3:-$DEFAULT_HOST}
+	local PORT=${4:-$DEFAULT_PORT}
+	local USER=${5:-$DEFAULT_USER}
+
+	build_rsync "$USER@$HOST:$SOURCE" "$DESTINATION" "$PORT" 
+}
+
+function list_remote() {
+	local SOURCE=${1:-\~}
+
+	local DEPTH=${2:-1}
+
+	local HOST=${3:-$DEFAULT_HOST}
+	local PORT=${4:-$DEFAULT_PORT}
+	local USER=${5:-$DEFAULT_USER}
+
+	local CUT_START=$((${#SOURCE} + 1))
+
+	ssh -p "$PORT" "$USER"@"$HOST" "find $SOURCE -maxdepth $DEPTH | cut -c $CUT_START-"	
+}
+
+HELP="syncus - script collection to sync files with ssh server
+
+s, sync SOURCE [DESTINATION] [HOST] [PORT] [USER]
+		Sync files from USER@HOST:SOURCE to DESTINATION, opening the ssh connection on PORT.
+
+l, list	[SOURCE] [HOST] [DEPTH] [PORT] [USER]
+		List (possibly recursively) the files on the target machine.
+"
+
+case "$1" in
+	s|sync)
+		shift
+		build_rsync_to_local "$@"
+	;;
+
+	l|list)
+		shift
+		list_remote "$@"
+	;;
+
+	*)
+		echo "$HELP"
+	;;
+esac
