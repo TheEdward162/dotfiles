@@ -18,6 +18,8 @@ blacklist nouveau
 
 Note: I've had problems where the GPU was sometimes on even though the drivers were not loaded, a simple workaround is to run the `off.sh` script at boot.
 
+Another note: D-FL4K has reported that after following these steps, they couldn't run openGL. A possible fix appears to `export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json` in your `.xinitrc`.
+
 ### TL;DR
 If you don't want to change any paths or scripts:
 ```
