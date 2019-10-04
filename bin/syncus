@@ -16,7 +16,7 @@ function build_rsync() {
 		exit 404
 	fi
 
-	rsync --archive --update --one-file-system --progress --stats --rsh "ssh -p $PORT -T -o Compression=no -x" "$SOURCE" "$DESTINATION"
+	rsync --archive --update --one-file-system --progress --stats --exclude '/.git' --filter 'dir-merge,- .gitignore' --rsh "ssh -p $PORT -T -o Compression=no -x" "$SOURCE" "$DESTINATION"
 }
 
 function build_rsync_to_local() {
@@ -28,6 +28,17 @@ function build_rsync_to_local() {
 	local USER=${5:-$DEFAULT_USER}
 
 	build_rsync "$USER@$HOST:$SOURCE" "$DESTINATION" "$PORT" 
+}
+
+function build_rsync_from_local() {
+	local SOURCE=${1}
+	local DESTINATION=${2}
+	
+	local HOST=${3:-$DEFAULT_HOST}
+	local PORT=${4:-$DEFAULT_PORT}
+	local USER=${5:-$DEFAULT_USER}
+
+	build_rsync "$SOURCE" "$USER@$HOST:$DESTINATION" "$PORT" 
 }
 
 function list_remote() {
@@ -57,6 +68,11 @@ case "$1" in
 	s|sync)
 		shift
 		build_rsync_to_local "$@"
+	;;
+
+	u|upload|upsync)
+		shift
+		build_rsync_from_local "$@"
 	;;
 
 	l|list)
