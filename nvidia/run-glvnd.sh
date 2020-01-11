@@ -9,11 +9,10 @@ MODULES_UNLOAD=(nvidia_drm nvidia_modeset nvidia_uvm)
 
 DEVICE_PATH="/sys/bus/pci/devices/$BUS_ID"
 DRIVER_PATH="/sys/bus/pci/drivers/nvidia"
-# LIBRARY_PATHS="/opt/nvidia/fakeroot/lib /opt/nvidia/fakeroot/lib32"
 
 XINITRC_PATH="$HOME/.xinitrc"
-CONFIG_PATH="nvidia/xorg.conf"
-CONFIGDIR_PATH="nvidia/xorg.conf.d"
+# CONFIG_PATH="nvidia/xorg.conf"
+# CONFIGDIR_PATH="nvidia/xorg.conf.d"
 
 BUS_RESCAN_WAIT_SEC=1
 
@@ -102,22 +101,16 @@ deactivate_gpu() {
 	# This should be true for "newer" devices, whatever that means.
 }
 
-run_x() {
+run_gui() {
 	local wm="$1"
 
 	calculate_display
 	local tty_number=$(fgconsole)
 	echo "Calculated display $FREE_DISPLAY and TTY $tty_number"
 
-	# echo "Adding $LIBRARY_PATHS to ldconfig paths"
-	# sudo ldconfig $LIBRARY_PATHS
-
-	echo "Running X"
-	xinit "$XINITRC_PATH" "$wm" nvidia -- $FREE_DISPLAY "vt$tty_number" -nolisten tcp -br -config "$CONFIG_PATH" -configdir "$CONFIGDIR_PATH"
+	echo "Running GUI"
+	xinit "$XINITRC_PATH" "$wm" 'nvidia-offload' -- $FREE_DISPLAY "vt$tty_number" -nolisten tcp -br
 	echo ""
-
-	# echo "Resetting ldconfig"
-	# sudo ldconfig
 }
 
 
@@ -126,7 +119,7 @@ error=$?
 
 echo ""
 if [[ $error -eq 0 ]]; then
-	run_x "$1"
+	run_gui "$1"
 else
 	echo "Error ($error): Could not activate GPU"
 fi
