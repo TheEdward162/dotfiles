@@ -48,7 +48,7 @@ You should now be running your X session on your NVIDIA card.
 ### install.py
 *This script is partly a hack, use at your own risk.*
 
-This script prepares a fakeroot and uses xbps-install to install the `nvidia nvidia-libs nvidia-libs-32bit` packages into it so that they don't collide with your intel packages (namely `libGL libEGL`). It creates a `fakeroot` directory in current working directory and then creates `usr/lib usr/lib32` folders inside. It also creates symlinks `fakeroot/lib -> fakeroot/usr/lib` and `fakeroot/lib32 -> fakeroot/usr/lib32`.
+This script prepares a fakeroot and uses `xbps-install` to install the `nvidia nvidia-libs nvidia-libs-32bit` packages into it so that they don't collide with your intel packages (namely `libGL libEGL`). It creates a `fakeroot` directory in current working directory and then creates `usr/lib usr/lib32` folders inside. It also creates symlinks `fakeroot/lib -> fakeroot/usr/lib` and `fakeroot/lib32 -> fakeroot/usr/lib32`.
 
 This script also creates a fake xbps package database in `fakeroot/var/db/xbps/pkgdb-0.38.plist` to trick xbps into thinking all the required packages except for the nvidia driver ones are actually in the fakeroot. This is a **hack**, but it should work as long as the required packages are actually installed on your system.
 
