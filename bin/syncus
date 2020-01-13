@@ -1,86 +1,321 @@
-#!/bin/bash
+#!/usr/bin/python3
 
-set -x
+import re
+import sys
+import subprocess
+import argparse
 
-DEFAULT_HOST="192.168.1.100"
-DEFAULT_PORT=4142
-DEFAULT_USER="edward"
+DEFAULT_HOST = "192.168.0.201"
+DEFAULT_USER = "edward"
+DEFAULT_PORT = "4142"
 
-function build_rsync() {
-	local SOURCE=${1}
-	local DESTINATION=${2:-.}
+def build_parser():
+	def parser_type_boolean(v):
+			if isinstance(v, bool):
+				return v
+			if v.lower() in ('yes', 'true', 't', 'y', '1'):
+				return True
+			elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+				return False
+			else:
+				raise argparse.ArgumentTypeError('Boolean value expected.')
 
-	local PORT=${3:-$DEFAULT_PORT}
+	def build_parser_host_port_user(parser):
+		parser.add_argument(
+			"-H", "--host", dest = "HOST",
+			default = DEFAULT_HOST,
+			help = "Host to connect to."
+		)
 
-	if [ -z $SOURCE ]; then
-		exit 404
-	fi
+		parser.add_argument(
+			"-u", "--user", dest = "USER",
+			default = DEFAULT_USER,
+			help = "User to log in to on the host."
+		)
 
-	rsync --archive --update --one-file-system --progress --stats --exclude '/.git' --filter 'dir-merge,- .gitignore' --rsh "ssh -p $PORT -T -o Compression=no -x" "$SOURCE" "$DESTINATION"
-}
+		parser.add_argument(
+			"-p", "--port", dest = "PORT",
+			default = DEFAULT_PORT,
+			help = "Port to connect direct ssh at on the host."
+		)
 
-function build_rsync_to_local() {
-	local SOURCE=${1}
-	local DESTINATION=${2}
+	def build_parser_recursive(parser):
+		parser.add_argument(
+			"-r", "--recursive", dest = "RECURSIVE",
+			type = parser_type_boolean, default = True,
+			help = "Pass --recursive to rsync."
+		)
 	
-	local HOST=${3:-$DEFAULT_HOST}
-	local PORT=${4:-$DEFAULT_PORT}
-	local USER=${5:-$DEFAULT_USER}
+	def build_parser_dry_run(parser):
+		parser.add_argument(
+			"-n", "--dry-run", dest = "DRY_RUN",
+			type = parser_type_boolean, const = True, nargs = "?",
+			help = "Pass --dry-run to rsync."
+		)
 
-	build_rsync "$USER@$HOST:$SOURCE" "$DESTINATION" "$PORT" 
-}
+	parser = argparse.ArgumentParser(description = "Utility for synchronizing files using ssh.")
+	subparsers = parser.add_subparsers(dest = "subcommand")
+	subparsers.required = True
 
-function build_rsync_from_local() {
-	local SOURCE=${1}
-	local DESTINATION=${2}
+	## LIST
+	sub_list = subparsers.add_parser(
+		"list", aliases = ["l"],
+		description = "List the files on the target machine.",
+		help = "Recursively list the files in USER@HOST:PORT:SOURCE"
+	)
+	build_parser_host_port_user(sub_list)
+	sub_list.add_argument(
+		"PATH",
+		default = ".", nargs = "?",
+		help = "Path to list on the host machine."
+	)
+	sub_list.add_argument(
+		"-d", "--depth", dest = "DEPTH",
+		default = 1, type = int,
+		help = "Depth to which to recurse when listing."
+	)
+	sub_list.set_defaults(subcommand_function = run_list)
+
+	## DIFF
+	sub_diff = subparsers.add_parser(
+		"difference", aliases = ["diff", "df"],
+		description = "Diff files between the host and local system.",
+		help = "Diff files from USER@HOST:PORT:SOURCE and DESTINATION using rsync."
+	)
+	build_parser_host_port_user(sub_diff)
+	build_parser_recursive(sub_diff)
+	sub_diff.add_argument(
+		"REMOTE",
+		help = "Path to file or folder on the host."
+	)
+	sub_diff.add_argument(
+		"LOCAL",
+		default = ".", nargs = "?",
+		help = "Path to file or folder on the local system."
+	)
+	sub_diff.set_defaults(subcommand_function = run_diff)
+
+	## DOWNLOAD
+	sub_download = subparsers.add_parser(
+		"download", aliases = ["down", "dw", "d"],
+		description = "Download files from the host.",
+		help = "Download files from USER@HOST:PORT:SOURCE to DESTINATION using rsync."
+	)
+	build_parser_host_port_user(sub_download)
+	build_parser_recursive(sub_download)
+	build_parser_dry_run(sub_download)
+	sub_download.add_argument(
+		"SOURCE",
+		help = "Path to file or folder to download."
+	)
+	sub_download.add_argument(
+		"DESTINATION",
+		default = ".", nargs = "?",
+		help = "Destination path."
+	)
+	sub_download.set_defaults(subcommand_function = run_download)
+
+	## UPLOAD
+	sub_upload = subparsers.add_parser(
+		"upload", aliases = ["up", "u"],
+		description = "Upload files to the host.",
+		help = "Upload files from DESTINATION to USER@HOST:PORT:SOURCE using rsync."
+	)
+	build_parser_host_port_user(sub_upload)
+	build_parser_recursive(sub_upload)
+	build_parser_dry_run(sub_upload)
+	sub_upload.add_argument(
+		"SOURCE",
+		default = ".", nargs = "?",
+		help = "Path to file or folder to upload."
+	)
+	sub_upload.add_argument(
+		"DESTINATION",
+		help = "Destination path."
+	)
+	sub_upload.set_defaults(subcommand_function = run_upload)
+
+	## SYNC
+	sub_sync = subparsers.add_parser(
+		"synchronize", aliases = ["sync", "s"],
+		description = "Synchronize files between the host and local system.",
+		help = "Synchronize files from USER@HOST:PORT:SOURCE and DESTINATION using rsync."
+	)
+	build_parser_host_port_user(sub_sync)
+	build_parser_recursive(sub_sync)
+	build_parser_dry_run(sub_sync)
+	sub_sync.add_argument(
+		"REMOTE",
+		help = "Path to file or folder on the host."
+	)
+	sub_sync.add_argument(
+		"LOCAL",
+		default = ".", nargs = "?",
+		help = "Path to file or folder on the local system."
+	)
+	sub_sync.set_defaults(subcommand_function = run_sync)
+
+	return parser
+
+def build_host_string(args):
+	if args.USER is None:
+		return args.HOST
+	else:
+		return f"{args.USER}@{args.HOST}"
+
+def build_rsync_common(args):
+	result = []
 	
-	local HOST=${3:-$DEFAULT_HOST}
-	local PORT=${4:-$DEFAULT_PORT}
-	local USER=${5:-$DEFAULT_USER}
+	if "RECURSIVE" in args and args.RECURSIVE is True:
+		result.append("--recursive")
+	
+	if "DRY_RUN" in args and args.DRY_RUN is True:
+		result.append("--dry-run")
 
-	build_rsync "$SOURCE" "$USER@$HOST:$DESTINATION" "$PORT" 
-}
+	return result + [
+		"--exclude", "./git", "--filter", "dir-merge,- .gitignore",
+		"--rsh", f"ssh -p {args.PORT} -T -o Compression=no -x",
+	]
 
-function list_remote() {
-	local SOURCE=${1:-\~}
+def run_list(args):
+	host_string = build_host_string(args)
+	print(f"Running list {host_string}:{args.PORT}:{args.PATH} with depth {args.DEPTH} ..", file = sys.stderr)
 
-	local DEPTH=${2:-1}
+	cut_start = len(args.PATH) + 2
 
-	local HOST=${3:-$DEFAULT_HOST}
-	local PORT=${4:-$DEFAULT_PORT}
-	local USER=${5:-$DEFAULT_USER}
+	subprocess.run(
+		[
+			"ssh", "-p", args.PORT, host_string,
+			f"find {args.PATH} -maxdepth {args.DEPTH} | cut -c {cut_start}-"
+		],
+		check = True
+	)
 
-	local CUT_START=$((${#SOURCE} + 1))
+# RE_DIFF_DELETING = re.compile("^\*deleting (.+?[^/])$")
+RE_DIFF_SENDING = re.compile("^>f....... (.+)$")
+RE_DIFF_RECEIVING = re.compile("^<f....... (.+)$")
+def run_diff(args):
+	host_string = build_host_string(args)
+	print(f"Running diff {host_string}:{args.PORT}:{args.REMOTE} and {args.LOCAL} ..", file = sys.stderr)
 
-	ssh -p "$PORT" "$USER"@"$HOST" "find $SOURCE -maxdepth $DEPTH | cut -c $CUT_START-"	
-}
+	print()
+	with subprocess.Popen(
+		[
+			"rsync", "--dry-run",
+			"--itemize-changes", "--ignore-existing"
+		] + build_rsync_common(args) + [
+			f"{host_string}:{args.REMOTE}", args.LOCAL
+		],
+		stdout = subprocess.PIPE
+	) as proc:
+		for line in proc.stdout:
+			str_line = line.decode("utf-8").strip("\n")
 
-HELP="syncus - script collection to sync files with ssh server
+			# use with --delete, but doesn't work without --recursive
+			# match = RE_DIFF_DELETING.match(str_line)
+			# if match is not None:
+			# 	file = match.group(1)
+			# 	print(f"UPLD\t{file}")
+			# 	continue
+			
+			match = RE_DIFF_SENDING.match(str_line)
+			if match is not None:
+				file = match.group(1)
+				print(f"DOWN\t{file}")
+				continue
+	
+	with subprocess.Popen(
+		[
+			"rsync", "--dry-run",
+			"--itemize-changes", "--ignore-existing"
+		] + build_rsync_common(args) + [
+			args.LOCAL, f"{host_string}:{args.REMOTE}"
+		],
+		stdout = subprocess.PIPE
+	) as proc:
+		for line in proc.stdout:
+			str_line = line.decode("utf-8").strip("\n")
 
-s, sync SOURCE [DESTINATION] [HOST] [PORT] [USER]
-		Sync files from USER@HOST:SOURCE to DESTINATION, opening the ssh connection on PORT.
+			match = RE_DIFF_RECEIVING.match(str_line)
+			if match is not None:
+				file = match.group(1)
+				print(f"UPLD\t{file}")
+				continue
 
-l, list	[SOURCE] [HOST] [DEPTH] [PORT] [USER]
-		List (possibly recursively) the files on the target machine.
-"
+	with subprocess.Popen(
+		[
+			"rsync", "--dry-run",
+			"--itemize-changes", "--existing"
+		] + build_rsync_common(args) + [
+			f"{host_string}:{args.REMOTE}", args.LOCAL
+		],
+		stdout = subprocess.PIPE
+	) as proc:
+		for line in proc.stdout:
+			str_line = line.decode("utf-8").strip("\n")
+			print(str_line)
 
-case "$1" in
-	s|sync)
-		shift
-		build_rsync_to_local "$@"
-	;;
+def run_download(args):
+	host_string = build_host_string(args)
+	print(f"Running download {host_string}:{args.PORT}:{args.SOURCE} to {args.DESTINATION} ..", file = sys.stderr)
 
-	u|upload|upsync)
-		shift
-		build_rsync_from_local "$@"
-	;;
+	subprocess.run(
+		[
+			"rsync",
+			"--archive", "--update",
+			"--progress", "--stats"
+		] + build_rsync_common(args) + [
+			f"{host_string}:{args.SOURCE}", args.DESTINATION
+		],
+		check = True
+	)
 
-	l|list)
-		shift
-		list_remote "$@"
-	;;
+def run_upload(args):
+	host_string = build_host_string(args)
+	print(f"Running upload {args.SOURCE} to {host_string}:{args.PORT}:{args.DESTINATION} ..", file = sys.stderr)
 
-	*)
-		echo "$HELP"
-	;;
-esac
+	subprocess.run(
+		[
+			"rsync",
+			"--archive", "--update",
+			"--progress", "--stats"
+		] + build_rsync_common(args) + [
+			args.SOURCE, f"{host_string}:{args.DESTINATION}"
+		],
+		check = True
+	)
+
+def run_sync(args):
+	host_string = build_host_string(args)
+	print(f"Running sync {host_string}:{args.PORT}:{args.REMOTE} and {args.LOCAL} ..", file = sys.stderr)
+
+	print("\nDOWN")
+	subprocess.run(
+		[
+			"rsync",
+			"--itemize-changes", "--update"
+		] + build_rsync_common(args) + [
+			f"{host_string}:{args.REMOTE}", args.LOCAL
+		],
+		check = True
+	)
+
+	print("\nUPLD")
+	subprocess.run(
+		[
+			"rsync",
+			"--itemize-changes", "--update"
+		] + build_rsync_common(args) + [
+			args.LOCAL, f"{host_string}:{args.REMOTE}"
+		],
+		check = True
+	)
+
+def main():
+	parser = build_parser()
+
+	args = parser.parse_args()
+	print(args, file = sys.stderr)
+	args.subcommand_function(args)
+
+main()
