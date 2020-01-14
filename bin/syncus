@@ -74,6 +74,16 @@ def build_parser():
 		default = 1, type = int,
 		help = "Depth to which to recurse when listing."
 	)
+	sub_list.add_argument(
+		"--find", dest = "FIND",
+		default = False, type = parser_type_boolean, const = True, nargs = "?",
+		help = "Use find instead of exa."
+	)
+	sub_list.add_argument(
+		"--color", dest = "COLOR",
+		default = True, type = parser_type_boolean,
+		help = "Use color output for exa."
+	)
 	sub_list.set_defaults(subcommand_function = run_list)
 
 	## DIFF
@@ -181,15 +191,27 @@ def run_list(args):
 	host_string = build_host_string(args)
 	print(f"Running list {host_string}:{args.PORT}:{args.PATH} with depth {args.DEPTH} ..", file = sys.stderr)
 
-	cut_start = len(args.PATH) + 2
-
-	subprocess.run(
-		[
-			"ssh", "-p", args.PORT, host_string,
-			f"find {args.PATH} -maxdepth {args.DEPTH} | cut -c {cut_start}-"
-		],
-		check = True
-	)
+	print()
+	if args.FIND is True:
+		cut_start = len(args.PATH) + 2
+		subprocess.run(
+			[
+				"ssh", "-p", args.PORT, host_string,
+				f"find {args.PATH} -maxdepth {args.DEPTH} | cut -c {cut_start}-"
+			],
+			check = True
+		)
+	else:
+		color = "never"
+		if args.COLOR is True:
+			color = "always"
+		subprocess.run(
+			[
+				"ssh", "-p", args.PORT, host_string,
+				f"exa --recurse --level {args.DEPTH} --long --all --all --git --color {color} {args.PATH}"
+			],
+			check = True
+		)
 
 # RE_DIFF_DELETING = re.compile("^\*deleting (.+?[^/])$")
 RE_DIFF_SENDING = re.compile("^>f....... (.+)$")
