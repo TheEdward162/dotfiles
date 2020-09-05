@@ -1,9 +1,21 @@
 #!/bin/sh
 
 LOG_PATH=/dev/stderr
-if [ "$1" = "-q" ]; then
-    LOG_PATH=/dev/null
-fi
+DRY_RUN=0
+
+while [ ! -z "$1" ]; do
+	case "$1" in
+		-q)
+			LOG_PATH=/dev/null
+		;;
+
+		-d)
+			DRY_RUN=1
+		;;
+	esac
+shift
+done
+
 
 HOME_1='.xinitrc'
 
@@ -67,36 +79,38 @@ ETC_X11='nvidia/xorg.conf
 nvidia/xorg.conf.d'
 
 backup() {
-    local from=$1
-    local to=$2
+	local from=$1
+	local to=$2
 
-    printf 'Backing up "%s" to "%s"\n' "$from" "$to"
-    mkdir -p $(dirname "$to")
-    cp --no-dereference --preserve=all "$from" "$to"
+	printf 'Backing up "%s" to "%s"\n' "$from" "$to"
+	if [ $DRY_RUN -eq 0 ]; then
+		mkdir -p $(dirname "$to")
+		cp --no-dereference --preserve=all "$from" "$to"
+	fi
 }
 
 diff_backup() {
-    local base=$1
-    local files=$2
+	local base=$1
+	local files=$2
 
-    for file in $files; do
-        local path="$base/$file"
+	for file in $files; do
+		local path="$base/$file"
 
-        if [ -f "$path" ]; then
-            if [ -f "./$file" ]; then
-                diff -q "$path" "./$file" >/dev/null
-                if [ ! $? ]; then
-                    backup "$path" "./$file"
-                else
-                    printf 'Skipping "%s" because it has not changed\n' "$path" >$LOG_PATH
-                fi
-            else
-                backup "$path" "./$file"
-            fi
-        else
-            printf '"%s" does not exist or is not a file\n' "$path" >$LOG_PATH
-        fi
-    done
+		if [ -f "$path" ]; then
+			if [ -f "./$file" ]; then
+				diff -q "$path" "./$file" >/dev/null
+				if [ ! $? ]; then
+					backup "$path" "./$file"
+				else
+					printf 'Skipping "%s" because it has not changed\n' "$path" >$LOG_PATH
+				fi
+			else
+				backup "$path" "./$file"
+			fi
+		else
+			printf '"%s" does not exist or is not a file\n' "$path" >$LOG_PATH
+		fi
+	done
 }
 
 diff_backup '/home/edward' "$HOME_1"
