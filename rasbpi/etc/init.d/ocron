@@ -1,0 +1,10 @@
+#!/sbin/openrc-run
+
+command=/usr/local/bin/ocron
+command_args="${OCRON_CONFIG}"
+name='ocron daemon'
+command_background=true
+command_user='cron:cron'
+pidfile='/var/run/ocron.pid'
+
+description='ocron is cron with obivous configuration'

@@ -1,0 +1,33 @@
+(
+	tcp_address: ("0.0.0.0", 80),
+	tcp_nonblocking: false,
+	tcp_max_read_timeout: Some((
+		secs: 5,
+		nanos: 0,
+	)),
+	status_shell_command: "sudo arsenal_status",
+	status_update_cooldown: (
+		secs: 1,
+		nanos: 0,
+	),
+	watcher_delay: (
+		secs: 5,
+		nanos: 0,
+	),
+	external_drive_path: "/mnt/maxtor",
+	external_drive_readme_path: "Movies/README.md",
+	external_drive_url_prefix: "/maxtor",
+	mpv_ipc_socket: "/tmp/arsenal_mpv.socket",
+	mpv_check_cooldown: (
+		secs: 5,
+		nanos: 0,
+	),
+	transmission_link: "http://rasbpi.local:4229",
+	web_root_path: "/usr/local/etc/arsenal/web/",
+	allowed_resource_extensions: [
+		"html",
+		"css",
+		"js",
+		"png",
+	],
+)

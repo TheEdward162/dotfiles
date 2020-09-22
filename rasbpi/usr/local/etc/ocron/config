@@ -1,0 +1,3 @@
+[hdd_idle_sda]
+cmd = ["sh", "/usr/local/bin/hdd-idle", "sda"]
+after = { minutes = 10 }
