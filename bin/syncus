@@ -7,7 +7,7 @@ import argparse
 
 DEFAULT_HOST = "192.168.0.201"
 DEFAULT_USER = "edward"
-DEFAULT_PORT = "4142"
+DEFAULT_PORT = "4222"
 
 def build_parser():
 	def parser_type_boolean(v):
@@ -187,30 +187,41 @@ def build_rsync_common(args):
 		"--rsh", f"ssh -p {args.PORT} -T -o Compression=no -x",
 	]
 
+def run_command(command, stdout_line_cb = None):
+	print(f"Running command {command}", file = sys.stderr)
+
+	if stdout_line_cb is not None:
+		with subprocess.Popen(command, stdout = subprocess.PIPE) as proc:
+			for line in proc.stdout:
+				str_line = line.decode("utf-8").strip("\n")
+				stdout_line_cb(str_line)
+	else:
+		subprocess.run(
+			command,
+			check = True
+		)
+
 def run_list(args):
 	host_string = build_host_string(args)
-	print(f"Running list {host_string}:{args.PORT}:{args.PATH} with depth {args.DEPTH} ..", file = sys.stderr)
+	print(f"Running list {host_string}:{args.PORT}:{args.PATH} with depth {args.DEPTH} ..", end = "\n\n", file = sys.stderr)
 
-	print()
 	if args.FIND is True:
 		cut_start = len(args.PATH) + 2
-		subprocess.run(
+		run_command(
 			[
 				"ssh", "-p", args.PORT, host_string,
 				f"find {args.PATH} -maxdepth {args.DEPTH} | cut -c {cut_start}-"
-			],
-			check = True
+			]
 		)
 	else:
 		color = "never"
 		if args.COLOR is True:
 			color = "always"
-		subprocess.run(
+		run_command(
 			[
 				"ssh", "-p", args.PORT, host_string,
 				f"exa --recurse --level {args.DEPTH} --long --all --all --git --color {color} {args.PATH}"
-			],
-			check = True
+			]
 		)
 
 # RE_DIFF_DELETING = re.compile("^\*deleting (.+?[^/])$")
@@ -218,93 +229,74 @@ RE_DIFF_SENDING = re.compile("^>f....... (.+)$")
 RE_DIFF_RECEIVING = re.compile("^<f....... (.+)$")
 def run_diff(args):
 	host_string = build_host_string(args)
-	print(f"Running diff {host_string}:{args.PORT}:{args.REMOTE} and {args.LOCAL} ..", file = sys.stderr)
+	print(f"Running diff {host_string}:{args.PORT}:{args.REMOTE} and {args.LOCAL} ..", end = "\n\n", file = sys.stderr)
 
-	print()
-	with subprocess.Popen(
+	def cb_sending(line):
+		match = RE_DIFF_SENDING.match(line)
+		if match is not None:
+			file = match.group(1)
+			print(f"DOWN\t{file}")
+	run_command(
 		[
 			"rsync", "--dry-run",
 			"--itemize-changes", "--ignore-existing"
 		] + build_rsync_common(args) + [
 			f"{host_string}:{args.REMOTE}", args.LOCAL
 		],
-		stdout = subprocess.PIPE
-	) as proc:
-		for line in proc.stdout:
-			str_line = line.decode("utf-8").strip("\n")
-
-			# use with --delete, but doesn't work without --recursive
-			# match = RE_DIFF_DELETING.match(str_line)
-			# if match is not None:
-			# 	file = match.group(1)
-			# 	print(f"UPLD\t{file}")
-			# 	continue
-			
-			match = RE_DIFF_SENDING.match(str_line)
-			if match is not None:
-				file = match.group(1)
-				print(f"DOWN\t{file}")
-				continue
+		cb_sending
+	)
 	
-	with subprocess.Popen(
+	def cb_receiving(line):
+		match = RE_DIFF_RECEIVING.match(line)
+		if match is not None:
+			file = match.group(1)
+			print(f"UPLD\t{file}")
+	run_command(
 		[
 			"rsync", "--dry-run",
 			"--itemize-changes", "--ignore-existing"
 		] + build_rsync_common(args) + [
 			args.LOCAL, f"{host_string}:{args.REMOTE}"
 		],
-		stdout = subprocess.PIPE
-	) as proc:
-		for line in proc.stdout:
-			str_line = line.decode("utf-8").strip("\n")
+		cb_receiving
+	)
 
-			match = RE_DIFF_RECEIVING.match(str_line)
-			if match is not None:
-				file = match.group(1)
-				print(f"UPLD\t{file}")
-				continue
-
-	with subprocess.Popen(
+	run_command(
 		[
 			"rsync", "--dry-run",
 			"--itemize-changes", "--existing"
 		] + build_rsync_common(args) + [
 			f"{host_string}:{args.REMOTE}", args.LOCAL
 		],
-		stdout = subprocess.PIPE
-	) as proc:
-		for line in proc.stdout:
-			str_line = line.decode("utf-8").strip("\n")
-			print(str_line)
+		lambda line: print(line)
+	)
 
 def run_download(args):
 	host_string = build_host_string(args)
 	print(f"Running download {host_string}:{args.PORT}:{args.SOURCE} to {args.DESTINATION} ..", file = sys.stderr)
 
-	subprocess.run(
+	run_command(
 		[
 			"rsync",
 			"--archive", "--update",
 			"--progress", "--stats"
 		] + build_rsync_common(args) + [
 			f"{host_string}:{args.SOURCE}", args.DESTINATION
-		],
-		check = True
+		]
 	)
 
 def run_upload(args):
 	host_string = build_host_string(args)
 	print(f"Running upload {args.SOURCE} to {host_string}:{args.PORT}:{args.DESTINATION} ..", file = sys.stderr)
 
-	subprocess.run(
+	run_command(
 		[
 			"rsync",
 			"--archive", "--update",
 			"--progress", "--stats"
 		] + build_rsync_common(args) + [
 			args.SOURCE, f"{host_string}:{args.DESTINATION}"
-		],
-		check = True
+		]
 	)
 
 def run_sync(args):
@@ -312,25 +304,23 @@ def run_sync(args):
 	print(f"Running sync {host_string}:{args.PORT}:{args.REMOTE} and {args.LOCAL} ..", file = sys.stderr)
 
 	print("\nDOWN")
-	subprocess.run(
+	run_command(
 		[
 			"rsync",
 			"--itemize-changes", "--update"
 		] + build_rsync_common(args) + [
 			f"{host_string}:{args.REMOTE}", args.LOCAL
-		],
-		check = True
+		]
 	)
 
 	print("\nUPLD")
-	subprocess.run(
+	run_command(
 		[
 			"rsync",
 			"--itemize-changes", "--update"
 		] + build_rsync_common(args) + [
 			args.LOCAL, f"{host_string}:{args.REMOTE}"
-		],
-		check = True
+		]
 	)
 
 def main():
