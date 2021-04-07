@@ -1,0 +1,233 @@
+import argparse
+
+import rsync
+import diff
+from util import log
+
+DEFAULT_HOST = "192.168.0.201"
+DEFAULT_USER = "edward"
+DEFAULT_PORT = "4222"
+
+def parser_type_boolean(v):
+	if isinstance(v, bool):
+		return v
+	if v.lower() in ('yes', 'true', 't', 'y', '1'):
+		return True
+	elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+		return False
+	else:
+		raise argparse.ArgumentTypeError('Boolean value expected.')
+
+def build_parser_host_port_user(parser):
+	parser.add_argument(
+		"-H", "--host", dest = "HOST",
+		default = DEFAULT_HOST,
+		help = "Host to connect to."
+	)
+
+	parser.add_argument(
+		"-u", "--user", dest = "USER",
+		default = DEFAULT_USER,
+		help = "User to log in to on the host."
+	)
+
+	parser.add_argument(
+		"-p", "--port", dest = "PORT",
+		default = DEFAULT_PORT,
+		help = "Port to connect direct ssh at on the host."
+	)
+
+def build_parser_recursive(parser):
+	parser.add_argument(
+		"-r", "--recursive", dest = "RECURSIVE",
+		type = parser_type_boolean, default = True,
+		help = "Pass --recursive to rsync."
+	)
+	
+def build_parser_dry_run(parser):
+	parser.add_argument(
+		"-n", "--dry-run", dest = "DRY_RUN",
+		type = parser_type_boolean, const = True, nargs = "?",
+		help = "Pass --dry-run to rsync."
+	)
+
+def build_parser_list(subparsers):
+	sub_list = subparsers.add_parser(
+		"list", aliases = ["ls"],
+		description = "List the files on the target machine.",
+		help = "Recursively list the files in USER@HOST:PORT:SOURCE"
+	)
+	build_parser_host_port_user(sub_list)
+	sub_list.add_argument(
+		"PATH",
+		default = ".", nargs = "?",
+		help = "Path to list on the remote host."
+	)
+	sub_list.add_argument(
+		"-d", "--depth", dest = "DEPTH",
+		default = 1, type = int,
+		help = "Depth to which to recurse when listing."
+	)
+	sub_list.add_argument(
+		"--find", dest = "FIND",
+		default = False, type = parser_type_boolean, const = True, nargs = "?",
+		help = "Use find instead of exa."
+	)
+	sub_list.add_argument(
+		"--color", dest = "COLOR",
+		default = True, type = parser_type_boolean,
+		help = "Use color output for exa."
+	)
+	sub_list.set_defaults(subcommand_function = rsync.run_list)
+
+def build_parser_download(subparsers):
+	sub_download = subparsers.add_parser(
+		"download", aliases = ["down", "dw"],
+		description = "Download files from the remote host.",
+		help = "Download files from USER@HOST:PORT:SOURCE to DESTINATION using rsync."
+	)
+	build_parser_host_port_user(sub_download)
+	build_parser_recursive(sub_download)
+	build_parser_dry_run(sub_download)
+	sub_download.add_argument(
+		"SOURCE",
+		help = "Path to file or folder to download."
+	)
+	sub_download.add_argument(
+		"DESTINATION",
+		default = ".", nargs = "?",
+		help = "Destination path."
+	)
+	sub_download.set_defaults(subcommand_function = rsync.run_download)
+
+def build_parser_upload(subparsers):
+	sub_upload = subparsers.add_parser(
+		"upload", aliases = ["up"],
+		description = "Upload files to the remote host.",
+		help = "Upload files from DESTINATION to USER@HOST:PORT:SOURCE using rsync."
+	)
+	build_parser_host_port_user(sub_upload)
+	build_parser_recursive(sub_upload)
+	build_parser_dry_run(sub_upload)
+	sub_upload.add_argument(
+		"SOURCE",
+		default = ".", nargs = "?",
+		help = "Path to file or folder to upload."
+	)
+	sub_upload.add_argument(
+		"DESTINATION",
+		help = "Destination path."
+	)
+	sub_upload.set_defaults(subcommand_function = rsync.run_upload)
+
+def build_parser_sync(subparsers):
+	sub_sync = subparsers.add_parser(
+		"synchronize", aliases = ["sync"],
+		description = "Synchronize files between the host and local system.",
+		help = "Synchronize files from USER@HOST:PORT:SOURCE and DESTINATION using rsync."
+	)
+	build_parser_host_port_user(sub_sync)
+	build_parser_recursive(sub_sync)
+	build_parser_dry_run(sub_sync)
+	sub_sync.add_argument(
+		"REMOTE",
+		help = "Path to file or folder on the remote host."
+	)
+	sub_sync.add_argument(
+		"LOCAL",
+		default = ".", nargs = "?",
+		help = "Path to file or folder on the local system."
+	)
+	sub_sync.set_defaults(subcommand_function = rsync.run_sync)
+
+def build_parser_diff(subparsers):
+	sub_diff = subparsers.add_parser(
+		"difference", aliases = ["diff", "df"],
+		description = "Diff files between the host and local system.",
+		help = "Diff files from USER@HOST:PORT:SOURCE and DESTINATION using rsync."
+	)
+	build_parser_host_port_user(sub_diff)
+	build_parser_recursive(sub_diff)
+	sub_diff.add_argument(
+		"REMOTE",
+		help = "Path to file or folder on the host."
+	)
+	sub_diff.add_argument(
+		"LOCAL",
+		default = ".", nargs = "?",
+		help = "Path to file or folder on the local system."
+	)
+	sub_diff.set_defaults(subcommand_function = diff.run_diff)
+
+def build_parser_diff_dedup(subparsers):
+	sub_diff_dedup = subparsers.add_parser(
+		"diff-dedup", aliases = ["df-dd"],
+		description = "Deduplicate syncus diffs.",
+		help = "Deduplicates diffs produced by `syncus diff` according to deduplications rules."
+	)
+
+	sub_diff_dedup.add_argument(
+		"PATH",
+		help = "Path to the diff generated by `syncus diff`"
+	)
+	sub_diff_dedup.add_argument(
+		"-e", "--ext", "--extensions", dest = "EXTENSIONS",
+		default = None, nargs = "+",
+		help = "Extensions to consider"
+	)
+	sub_diff_dedup.add_argument(
+		"--show-dups", dest = "SHOW_DUPLICATES",
+		default = False, const = True, nargs = "?",
+		help = "Shows duplicates at the end of the deduplicated diff as comments"
+	)
+	sub_diff_dedup.set_defaults(subcommand_function = diff.run_diff_dedup)
+
+def build_parser_diff_execute(subparsers):
+	sub_diff_execute = subparsers.add_parser(
+		"diff-execute", aliases = ["df-ex"],
+		description = "Execute syncus diff.",
+		help = "Executes diff produced by `syncus diff` or `syncus diff-dedup`."
+	)
+
+	sub_diff_execute.add_argument(
+		"PATH",
+		help = "Path to the diff generated by `syncus diff` or `syncus diff-dedup`"
+	)
+	build_parser_host_port_user(sub_diff_execute)
+	sub_diff_execute.add_argument(
+		"REMOTE",
+		help = "Path to file or folder on the remote host."
+	)
+	sub_diff_execute.add_argument(
+		"LOCAL",
+		default = ".", nargs = "?",
+		help = "Path to file or folder on the local system."
+	)
+	build_parser_dry_run(sub_diff_execute)
+
+	sub_diff_execute.set_defaults(subcommand_function = diff.run_diff_execute)
+
+
+def build_parser():
+	parser = argparse.ArgumentParser(description = "Utility for synchronizing files using ssh.")
+	subparsers = parser.add_subparsers(dest = "subcommand")
+	subparsers.required = True
+
+	build_parser_list(subparsers)
+	build_parser_download(subparsers)
+	build_parser_upload(subparsers)
+	build_parser_sync(subparsers)
+
+	build_parser_diff(subparsers)
+	build_parser_diff_dedup(subparsers)
+	build_parser_diff_execute(subparsers)
+
+	return parser
+
+def main():
+	parser = build_parser()
+	
+	args = parser.parse_args()
+	log(args)
+
+	args.subcommand_function(args)
