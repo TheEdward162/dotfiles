@@ -21,10 +21,14 @@ def build_rsync_common(args):
 	
 	if "DRY_RUN" in args and args.DRY_RUN is True:
 		result.append("--dry-run")
+	
+	ssh_port = ""
+	if "PORT" in args and args.PORT is not None:
+		ssh_port = f"-p {args.PORT}"
 
 	return result + [
 		"--exclude", "./git", "--filter", "dir-merge,- .gitignore",
-		"--rsh", f"ssh -p {args.PORT} -T -o Compression=no -x",
+		"--rsh", f"ssh {ssh_port} -T -o Compression=no -x",
 	]
 
 def run_command(command, stdout_line_cb = None, stdout_encoding = "utf-8"):

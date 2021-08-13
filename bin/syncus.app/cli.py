@@ -4,10 +4,6 @@ import rsync
 import diff
 from util import log
 
-DEFAULT_HOST = "192.168.0.201"
-DEFAULT_USER = "edward"
-DEFAULT_PORT = "4222"
-
 def parser_type_boolean(v):
 	if isinstance(v, bool):
 		return v
@@ -21,19 +17,16 @@ def parser_type_boolean(v):
 def build_parser_host_port_user(parser):
 	parser.add_argument(
 		"-H", "--host", dest = "HOST",
-		default = DEFAULT_HOST,
 		help = "Host to connect to."
 	)
 
 	parser.add_argument(
 		"-u", "--user", dest = "USER",
-		default = DEFAULT_USER,
 		help = "User to log in to on the host."
 	)
 
 	parser.add_argument(
 		"-p", "--port", dest = "PORT",
-		default = DEFAULT_PORT,
 		help = "Port to connect direct ssh at on the host."
 	)
 
