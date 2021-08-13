@@ -33,8 +33,8 @@ def run_download(args):
 			"--archive", "--update",
 			"--progress", "--stats"
 		] + build_rsync_common(args) + [
-			f"{host_string}:{args.SOURCE}", args.DESTINATION
-		]
+			f"{host_string}:{source}" for source in args.SOURCE
+		] + [args.DESTINATION]
 	)
 
 def run_upload(args):
@@ -46,9 +46,8 @@ def run_upload(args):
 			"rsync",
 			"--archive", "--update",
 			"--progress", "--stats"
-		] + build_rsync_common(args) + [
-			args.SOURCE, f"{host_string}:{args.DESTINATION}"
-		]
+		] + build_rsync_common(args) +
+		args.SOURCE + [f"{host_string}:{args.DESTINATION}"]
 	)
 
 def run_sync(args):

@@ -83,8 +83,8 @@ def build_parser_download(subparsers):
 	build_parser_recursive(sub_download)
 	build_parser_dry_run(sub_download)
 	sub_download.add_argument(
-		"SOURCE",
-		help = "Path to file or folder to download."
+		"SOURCE", nargs = "+",
+		help = "Path to files or folders to download."
 	)
 	sub_download.add_argument(
 		"DESTINATION",
@@ -103,8 +103,7 @@ def build_parser_upload(subparsers):
 	build_parser_recursive(sub_upload)
 	build_parser_dry_run(sub_upload)
 	sub_upload.add_argument(
-		"SOURCE",
-		default = ".", nargs = "?",
+		"SOURCE", nargs = "+",
 		help = "Path to file or folder to upload."
 	)
 	sub_upload.add_argument(
