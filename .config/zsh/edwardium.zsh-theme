@@ -3,6 +3,10 @@ local return_color="%(?.%{$fg_bold[green]%}.%{$fg_bold[red]%})"
 
 PROMPT="${return_color}λ%{$reset_color%} "
 
+if [[ -n $SSH_CONNECTION ]]; then
+	PROMPT="%{$fg[black]%}%m ${PROMPT}"
+fi
+
 # RIGHT PROMPT
 local time="${return_color}%*%{$reset_color%}"
 RPROMPT="%~ $time"
@@ -31,3 +35,5 @@ ZSH_THEME_GIT_PROMPT_UNMERGED="%{$fg[yellow]%}═ "
 ZSH_THEME_GIT_PROMPT_UNTRACKED="%{$fg[cyan]%}✭ "
 
 RPROMPT="$git_info $RPROMPT"
+
+DISABLE_LS_COLORS=true
