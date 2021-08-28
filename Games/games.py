@@ -7,7 +7,7 @@ import os.path
 import argparse
 import subprocess
 
-GAMES_PATH = "/mnt/storage/edward/Games"
+GAMES_PATH = "/mnt/big/edward/Games"
 RUNNERS_PATH = f"{GAMES_PATH}/lutris-wines"
 PRESETS_FILE = "presets.yaml"
 PROTON_LAYER = f"{GAMES_PATH}/proton_layer"
@@ -422,5 +422,5 @@ def main():
 	else:
 		return run(info)
 
-main()
-
+if __name__ == "__main__":
+	main()

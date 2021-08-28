@@ -1,7 +1,3 @@
-MISC:
-  command: explorer.exe
-  prefix: MISC
-  runner: lutris-5.7-x86_64
 cc:
   command: explorer.exe
   esync: true
@@ -10,56 +6,16 @@ cc:
 cemu:
   command: explorer.exe
   prefix: cemu
-dforces_bhd:
-  command: explorer.exe
-  prefix: dforces_bhd
-  runner: lutris-fshack-5.4-x86_64
 epic:
   command:
-  - epic_games/drive_c/Program Files (x86)/Epic Games/Launcher/Portal/Binaries/Win32/EpicGamesLauncher.exe
+  - 'epic_games/drive_c/Program Files (x86)/Epic Games/Launcher/Portal/Binaries/Win32/EpicGamesLauncher.exe'
   - -opengl
   - -SkipBuildPatchPrereq
   esync: true
   prefix: epic_games
-  runner: lutris-5.7-8-x86_64
+  runner: 'Proton 6.3'
   env:
-  - 'DXVK_HUD=compiler'
-  - 'MESA_GL_VERSION_OVERRIDE=4.4COMPAT'
-  - '__GL_SHADER_DISK_CACHE=1'
-  - '__GL_SHADER_DISK_CACHE_PATH=/home/edward/Games/epic_games/'
-hitman32:
-  arch: win32
-  command: /mnt/storage/edward/Games/hitman/drive_c/GOG Games/Hitman Absolution/retail/HMA.exe
-  esync: true
-  prefix: hitman
-  runner: lutris-fshack-5.7-x86_64
-hp:
-  command:
-  - explorer.exe
-  prefix: hp
-  runner: lutris-5.7-x86_64
-igi:
-  command: explorer.exe
-  prefix: igi
-  runner: lutris-fshack-5.7-x86_64
-kong:
-  command:
-  - explorer.exe
-  esync: true
-  prefix: kong
-  runner: lutris-5.7-x86_64
-meteor:
-  command: explorer.exe
-  prefix: meteor
-  runner: lutris-4.16-x86_64
-nfsc:
-  arch: win32
-  command: explorer.exe
-  esync: false
-  prefix: nfs-carbon
-  runner: lutris-5.0-x86_64
-wtl:
-  command:
-  - explorer.exe
-  prefix: while_true_learn
-  runner: lutris-5.7-x86_64
+    DXVK_HUD: 'compiler'
+    MESA_GL_VERSION_OVERRIDE: '4.4COMPAT'
+    __GL_SHADER_DISK_CACHE: '1'
+    __GL_SHADER_DISK_CACHE_PATH: 'epic_games/'
