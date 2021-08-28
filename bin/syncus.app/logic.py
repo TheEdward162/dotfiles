@@ -4,24 +4,25 @@ def run_list(args):
 	host_string = build_host_string(args)
 	log(f"Running list {host_string}:{args.PORT}:{args.PATH} with depth {args.DEPTH} ..", end = "\n\n")
 
+	port = []
+	if args.PORT is not None:
+		port = ["-p", args.PORT]
+
+
+	list_cmd = []
 	if args.FIND is True:
 		cut_start = len(args.PATH) + 2
-		run_command(
-			[
-				"ssh", "-p", args.PORT, host_string,
-				f"find {args.PATH} -maxdepth {args.DEPTH} | cut -c {cut_start}-"
-			]
-		)
+		list_cmd = [f"find {args.PATH} -maxdepth {args.DEPTH} | cut -c {cut_start}-"]
 	else:
 		color = "never"
 		if args.COLOR is True:
 			color = "always"
-		run_command(
-			[
-				"ssh", "-p", args.PORT, host_string,
-				f"exa --recurse --level {args.DEPTH} --long --all --all --git --color {color} {args.PATH}"
-			]
-		)
+		
+		list_cmd = [f"exa --recurse --level {args.DEPTH} --long --all --all --git --color {color} {args.PATH}"]
+
+	run_command(
+		["ssh"] + port + [host_string] + list_cmd
+	)
 
 def run_download(args):
 	host_string = build_host_string(args)

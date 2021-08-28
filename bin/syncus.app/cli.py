@@ -1,6 +1,6 @@
 import argparse
 
-import rsync
+import logic
 import diff
 from util import log
 
@@ -71,7 +71,7 @@ def build_parser_list(subparsers):
 		default = True, type = parser_type_boolean,
 		help = "Use color output for exa."
 	)
-	sub_list.set_defaults(subcommand_function = rsync.run_list)
+	sub_list.set_defaults(subcommand_function = logic.run_list)
 
 def build_parser_download(subparsers):
 	sub_download = subparsers.add_parser(
@@ -91,7 +91,7 @@ def build_parser_download(subparsers):
 		default = ".", nargs = "?",
 		help = "Destination path."
 	)
-	sub_download.set_defaults(subcommand_function = rsync.run_download)
+	sub_download.set_defaults(subcommand_function = logic.run_download)
 
 def build_parser_upload(subparsers):
 	sub_upload = subparsers.add_parser(
@@ -110,7 +110,7 @@ def build_parser_upload(subparsers):
 		"DESTINATION",
 		help = "Destination path."
 	)
-	sub_upload.set_defaults(subcommand_function = rsync.run_upload)
+	sub_upload.set_defaults(subcommand_function = logic.run_upload)
 
 def build_parser_sync(subparsers):
 	sub_sync = subparsers.add_parser(
@@ -130,7 +130,7 @@ def build_parser_sync(subparsers):
 		default = ".", nargs = "?",
 		help = "Path to file or folder on the local system."
 	)
-	sub_sync.set_defaults(subcommand_function = rsync.run_sync)
+	sub_sync.set_defaults(subcommand_function = logic.run_sync)
 
 def build_parser_diff(subparsers):
 	sub_diff = subparsers.add_parser(
