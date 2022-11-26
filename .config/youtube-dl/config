@@ -1,7 +1,0 @@
-# extract audio
---extract-audio
-# to mp3
---audio-format mp3
-
-# Save under Downloads/Downdloads-Storage/youtube-dl
---output ~/Downloads/Downloads-Storage/youtube-dl/%(title)s.%(ext)s

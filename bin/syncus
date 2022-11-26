@@ -1,6 +1,0 @@
-#!/bin/sh
-
-SCRIPT=$(readlink "$0")
-SCRIPTPATH=$(dirname "$SCRIPT")
-
-python3 "$SCRIPTPATH/syncus.app" "$@"

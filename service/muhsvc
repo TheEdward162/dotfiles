@@ -1,0 +1,285 @@
+#!/usr/bin/python
+
+import os
+import sys
+import json
+import time
+import signal
+import argparse
+import datetime
+import subprocess
+
+from dataclasses import dataclass
+
+@dataclass(eq = False, frozen = True)
+class RetryConfig:
+	restart_delay: int # seconds
+	restart_on_success: bool
+	max_count: int
+
+@dataclass(eq = False, frozen = True)
+class ServiceConfig:
+	name: str
+	command: str
+
+	stdout: str # "file", "devnull", "inherit"
+	stderr: str # "file", "devnull", "inherit"
+
+	retry: RetryConfig
+
+@dataclass(eq = False, frozen = True)
+class GroupEntryConfig:
+	service: str
+	existing: str # "replace", "keep", "fail"
+
+@dataclass(eq = False, frozen = True)
+class GroupConfig:
+	name: str
+	entries: dict
+
+## CONFIG ##
+
+def load_config(path):
+	result = None
+	with open(path, "r") as config_file:
+		result = json.load(config_file)
+	
+	services = dict()
+	for name, definition in result["services"].items():
+		services[name] = ServiceConfig(
+			name,
+			definition["command"],
+			definition["stdout"],
+			definition["stderr"],
+			RetryConfig(
+				definition["retry"]["restart_delay"],
+				definition["retry"]["restart_on_success"],
+				definition["retry"]["max_count"]
+			)
+		)
+	
+	groups = dict()
+	for name, definition in result["groups"].items():
+		entries = dict()
+		for entry_name, entry_definition in definition.items():
+			entries[entry_name] = GroupEntryConfig(
+				entry_name,
+				entry_definition["existing"]
+			)
+		
+		groups[name] = GroupConfig(
+			name,
+			entries
+		)
+	
+	return services, groups
+
+
+## UTIL ##
+
+def is_running(pid):
+	result = subprocess.run(["ps", "-o", "pid=", "-p", str(pid)], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+	return result.returncode == 0
+
+def kill_pid(pid):
+	return os.kill(pid, signal.SIGTERM)
+
+## APP ##
+
+class Logger:
+	def __init__(self, path):
+		self.path = path
+		self.file = None
+
+	def __enter__(self):
+		self.file = open(self.path, "a")
+		return self
+
+	def __exit__(self, exc_type, exc_value, exc_traceback):
+		self.file.close()
+		self.file = None
+	
+	def _log(self, level, message):
+		now = datetime.datetime.now().isoformat()
+		pid = os.getpid()
+		print(f"[{now}](PID {pid})[{level}] {message}", file = self.file)
+	
+	def flush(self):
+		self.file.flush()
+
+	def error(self, message):
+		self._log("ERROR", message)
+
+	def info(self, message):
+		self._log("INFO", message)
+
+	def debug(self, message):
+		self._log("DEBUG", message)
+
+class App:
+	def __init__(self, services, groups, service_directory):
+		self.services = services
+		self.groups = groups
+		self.service_directory = service_directory
+
+	def prepare_service_directory(self):
+		os.makedirs(self.service_directory, exist_ok = True)
+
+	def prepare_pid(self, service):
+		cfg = self.services[service]
+
+		path = os.path.join(self.service_directory, f"{cfg.name}.pid")
+		
+		current_pid = None
+		if os.path.exists(path):
+			with open(path, "r") as pid_file:
+				try:
+					current_pid = int(pid_file.read())
+				except:
+					pass
+		
+		return open(path, "w"), current_pid
+
+	def prepare_log(self, service):
+		cfg = self.services[service]
+
+		path = os.path.join(self.service_directory, f"{cfg.name}.log")
+
+		return Logger(path)
+
+	def prepare_stdout(self, service):
+		cfg = self.services[service]
+		
+		if cfg.stdout == "file":
+			path = os.path.join(self.service_directory, f"{cfg.name}.stdout")
+			return open(path, "w")
+		elif cfg.stdout == "devnull":
+			subprocess.DEVNULL
+		else:
+			None
+	
+	def prepare_stderr(self, service):
+		cfg = self.services[service]
+		
+		if cfg.stderr == "file":
+			path = os.path.join(self.service_directory, f"{cfg.name}.stderr")
+			return open(path, "w")
+		elif cfg.stderr == "devnull":
+			subprocess.DEVNULL
+		else:
+			None
+
+	def resolve_retry(self, service, return_code, restart_count):
+		cfg = self.services[service].retry
+		
+		if restart_count >= cfg.max_count:
+			return False
+		
+		if return_code == 0 and not cfg.restart_on_success:
+			return False
+		
+		time.sleep(cfg.restart_delay)
+		return True
+
+	def run_group_entry(self, group, entry):
+		self.prepare_service_directory()
+		
+		cfg_group = self.groups[group]
+		cfg_entry = cfg_group.entries[entry]
+		cfg_service = self.services[cfg_entry.service]
+
+		with self.prepare_log(cfg_entry.service) as log:
+			log.info(f"Running {cfg_group.name}/{cfg_entry.service} (service {cfg_service.name})")
+
+			# resolve existing and write pid
+			pid_file, existing_pid = self.prepare_pid(cfg_entry.service)
+			with pid_file as pid_file:
+				if existing_pid is not None and is_running(existing_pid):
+					if cfg_entry.existing == "replace":
+						log.debug(f"Killing existing instance (pid {existing_pid})")
+						kill_pid(existing_pid)
+					elif cfg_entry.existing == "keep":
+						log.debug(f"Keeping existing instance (pid {existing_pid})")
+						return None
+					elif cfg_entry.existing == "fail":
+						log.error(f"Another instance already running (pid {existing_pid})")
+						return None
+			
+				print(os.getpid(), file = pid_file)
+			
+			retry_count = 0
+			while True:
+				stdout = self.prepare_stdout(cfg_entry.service)
+				stderr = self.prepare_stderr(cfg_entry.service)
+
+				log.debug(f"Running {cfg_service.command}")
+				log.flush()
+
+				result = subprocess.run(
+					cfg_service.command,
+					stdout = stdout,
+					stderr = stderr
+				)
+
+				if hasattr(stdout, "close"):
+					stdout.close()
+				if hasattr(stderr, "close"):
+					stderr.close()
+
+				log.debug(f"Return code {result.returncode}")
+
+				if self.resolve_retry(cfg_entry.service, result.returncode, retry_count):
+					retry_count += 1
+				else:
+					break
+
+	def run_group(self, group):
+		child_pid = os.fork()
+
+		# parent ends
+		if child_pid != 0:
+			os._exit(0)
+		
+		# start new session and process group
+		os.setsid()
+		os.umask(0o27)
+
+		# now, for each entry, fork again
+		cfg = self.groups[group]
+		for entry in cfg.entries.keys():
+			child_pid = os.fork()
+			# children run group entries, leader continues looping
+			if child_pid == 0:
+				return self.run_group_entry(group, entry)
+
+		# only leader gets here
+		os._exit(0)
+
+## ENTRY ##
+
+def main():
+	user = os.environ["USER"]
+	
+	parser = argparse.ArgumentParser(description = "User service manager")
+	parser.add_argument(
+		"--service-directory", dest = "SERVICE_DIRECTORY",
+		default = f"/tmp/{user}/service", type = str,
+		help = "Service directory [default: /tmp/$USER/service]"
+	)
+	parser.add_argument(
+		"--service-definitions", dest = "SERVICE_DEFINITIONS",
+		default = f"/home/{user}/.config/muhsvc/services.json", type = str,
+		help = "Service definitions JSON file [default: ~/.config/muhsvc/services.json]"
+	)
+	parser.add_argument(
+		"GROUP", help = "Group to run"
+	)
+
+	args = parser.parse_args()
+	services, groups = load_config(args.SERVICE_DEFINITIONS)
+	app = App(services, groups, args.SERVICE_DIRECTORY)
+	
+	app.run_group(args.GROUP)
+
+if __name__ == "__main__":
+	main()

@@ -1,0 +1,43 @@
+{
+	"services": {
+		"pipewire": {
+			"command": ["/usr/bin/pipewire"],
+			"stdout": "devnull",
+			"stderr": "file",
+			"retry": {
+				"restart_delay": 3,
+				"restart_on_success": false,
+				"max_count": 0
+			}
+		},
+		"pipewire-pulse": {
+			"command": ["/usr/bin/pipewire-pulse"],
+			"stdout": "devnull",
+			"stderr": "file",
+			"retry": {
+				"restart_delay": 3,
+				"restart_on_success": false,
+				"max_count": 0
+			}
+		},
+		"wireplumber": {
+			"command": ["/usr/bin/wireplumber"],
+			"stdout": "devnull",
+			"stderr": "file",
+			"retry": {
+				"restart_delay": 3,
+				"restart_on_success": false,
+				"max_count": 0
+			}
+		}
+	},
+	"groups": {
+		"login": {
+			"pipewire": { "existing": "keep" },
+			"pipewire-pulse": { "existing": "keep" }
+		},
+		"desktop": {
+			"wireplumber": { "existing": "replace" }
+		}
+	}
+}

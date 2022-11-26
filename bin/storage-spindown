@@ -1,5 +1,0 @@
-#!/usr/bin/bash
-
-mpc stop
-umount /dev/sdb1
-hdparm -y /dev/sdb1
