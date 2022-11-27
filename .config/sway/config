@@ -1,0 +1,135 @@
+## Input and output
+output * background "$HOME/Pictures/hexagon-fading.png" stretch
+output HDMI-A-1 resolution 1920x1080 position 0,0
+
+input * {
+	xkb_layout "us,sk"
+	xkb_variant ",qwerty"
+	xkb_options "grp:alt_shift_toggle"
+	xkb_numlock "enable"
+
+	accel_profile flat
+	pointer_accel -0.1
+}
+seat * {
+	hide_cursor 3000
+}
+
+focus_follows_mouse no
+
+## Startup
+exec --no-startup-id "muhsvc desktop"
+
+## Styling
+font pango:Fira Mono 9
+
+# gaps
+# smart_gaps on
+# gaps inner 5
+# gaps outer 5
+
+# colors
+set $base #000000
+set $base_alt #333333
+set $text #FFFFFF
+set $text_alt #888888
+set $accent #E6003A
+
+# class					border		backgr.		text		indicator	child_border
+client.focused			$accent		$base_alt	$text		$accent		$accent
+client.focused_inactive	$text_alt	$base_alt	$text		$base_alt	$base_alt
+client.unfocused		$base_alt	$base_alt	$text_alt	$base		$base
+client.urgent			$accent		$text		$accent		#900000		#900000
+client.placeholder		#000000		#0c0c0c		#ffffff		#000000		#0c0c0c
+client.background		#FFFFFF
+
+# application specific
+#for_window [class="(?i)speedcrunch"] floating enable
+
+## Bindings
+
+# Media controls
+
+# volume key bindings
+bindsym XF86AudioMute exec --no-startup-id "wpctl set-mute '@DEFAULT_SINK@' toggle"
+bindsym XF86AudioLowerVolume exec --no-startup-id "wpctl set-volume '@DEFAULT_SINK@' 0.05-"
+bindsym XF86AudioRaiseVolume exec --no-startup-id "wpctl set-volume '@DEFAULT_SINK@' 0.05+"
+
+# Basic control
+set $mod Mod4
+
+bindsym $mod+Return exec "alacritty msg create-window || alacritty"
+bindsym $mod+Shift+Return exec firefox
+bindsym $mod+Shift+q kill
+bindsym $mod+d exec $menu
+
+floating_modifier $mod normal
+
+bindsym $mod+Shift+c reload
+bindsym $mod+Shift+r restart
+bindsym $mod+Ctrl+Shift+e exit
+
+# Move inside workspace
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+# Move around workspaces
+bindsym $mod+1 workspace number 1
+bindsym $mod+2 workspace number 2
+bindsym $mod+3 workspace number 3
+bindsym $mod+4 workspace number 4
+bindsym $mod+5 workspace number 5
+
+bindsym $mod+Shift+1 move container to workspace number 1
+bindsym $mod+Shift+2 move container to workspace number 2
+bindsym $mod+Shift+3 move container to workspace number 3
+bindsym $mod+Shift+4 move container to workspace number 4
+bindsym $mod+Shift+5 move container to workspace number 5
+
+# Splits and layouts
+bindsym $mod+b splith
+bindsym $mod+v splitv
+
+bindsym $mod+s layout tabbed
+bindsym $mod+Shift+space floating toggle
+bindsym $mod+space focus mode_toggle
+
+# Sizing
+bindsym $mod+f fullscreen
+mode "resize" {
+	bindsym Left resize shrink width 10px
+	bindsym Down resize grow height 10px
+	bindsym Up resize shrink height 10px
+	bindsym Right resize grow width 10px
+
+	bindsym Return mode "default"
+	bindsym Escape mode "default"
+}
+bindsym $mod+r mode "resize"
+
+#
+# Status Bar:
+#
+# Read `man 5 sway-bar` for more information about this section.
+bar {
+	position top
+
+	# When the status_command prints a new line to stdout, swaybar updates.
+	# The default just shows the current date and time.
+	status_command while date +'%Y-%m-%d %I:%M:%S %p'; do sleep 1; done
+
+	colors {
+		statusline #ffffff
+		background #323232
+		inactive_workspace #32323200 #32323200 #5c5c5c
+	}
+}
+
+include /etc/sway/config.d/*
