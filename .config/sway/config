@@ -114,16 +114,12 @@ mode "resize" {
 }
 bindsym $mod+r mode "resize"
 
-#
 # Status Bar:
-#
-# Read `man 5 sway-bar` for more information about this section.
 bar {
 	position top
 
 	# When the status_command prints a new line to stdout, swaybar updates.
-	# The default just shows the current date and time.
-	status_command while date +'%Y-%m-%d %I:%M:%S %p'; do sleep 1; done
+	status_command while "$HOME/.config/sway/swaybar-line"; do sleep 0.25s; done
 
 	colors {
 		statusline #ffffff

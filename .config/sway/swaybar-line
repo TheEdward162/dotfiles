@@ -1,0 +1,6 @@
+#!/bin/sh
+
+DATE=$(date +'%Y-%m-%d %H:%M:%S')
+VOLUME=$(wpctl get-volume '@DEFAULT_SINK@')
+
+printf '%s  %s \n' "$VOLUME" "$DATE"
