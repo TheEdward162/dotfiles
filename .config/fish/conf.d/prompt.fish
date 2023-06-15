@@ -1,20 +1,26 @@
 function fish_prompt
+	set -l last_status $status
+
 	set -g __fish_git_prompt_showdirtystate	1
 	set -g __fish_git_prompt_showuntrackedfiles 1
 	
-	set -l last_status $status
+	set -f lambda_colors green red
+	if fish_is_root_user
+		set -f lambda_colors magenta red
+	end
+
 	if test $last_status -eq 0
-		set -f lambda_color 'green'
+		set -f lambda_color $lambda_colors[1]
 	else
-		set -f lambda_color 'red'
+		set -f lambda_color $lambda_colors[2]
 	end
 
-	set -f path_overrides (string join ',' $override_node_version $override_java_version)
-	if test -n "$path_overrides"
-		set -f path_overrides " {$path_overrides}"
+	set -f tags (string join ',' $prompt_tags)
+	if test -n "$tags"
+		set -f tags " {$tags}"
 	end
 
-	printf '%s%s%s%s%s%s %sλ%s ' (set_color yellow) $PWD (set_color --bold white) "$(fish_git_prompt)" (set_color magenta) "$path_overrides" (set_color --bold green) (set_color normal)
+	printf "$(set_color yellow)$PWD""$(set_color --bold white)$(fish_git_prompt)$(set_color normal)""$(set_color white)$tags$(set_color normal)""$(set_color --bold green) λ$(set_color normal) "
 end
 
 function fish_right_prompt
