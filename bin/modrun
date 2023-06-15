@@ -1,0 +1,67 @@
+#!/bin/env python3
+
+import os
+import sys
+import argparse
+import subprocess
+
+class RunContext:
+	def __init__(self, command, env = None):
+		self.command = command
+		self.env = env
+		if self.env is None:
+			self.env = {}
+	
+	def run(self):
+		print("Command:", self.command, file = sys.stderr)
+		print("Env:", self.env, file = sys.stderr)
+		subprocess.Popen(
+			self.command, env = self.env,
+			stdout = sys.stdout, stderr = sys.stderr
+		)
+
+def _apply_amdgpu_pro(context):
+	context.env["VK_ICD_FILENAMES"] = "/usr/share/vulkan/icd.d/amd_pro_icd64.json"
+
+def _apply_amdgpu_raytracing(context):
+	context.env["RADV_PERFTEST"] = "rt"
+
+def _apply_nonet(context):
+	context.command = ["sg", "nonet"] + context.command
+
+
+def main():
+	parser = argparse.ArgumentParser(description = "Common run modifications")
+	parser.add_argument(
+		"--amdgpu-pro", dest = "AMDGPU_PRO",
+		default = False, action = "store_true"
+	)
+	parser.add_argument(
+		"--amdgpu-rtx", dest = "AMDGPU_RTX",
+		default = False, action = "store_true"
+	)
+	parser.add_argument(
+		"--no-net", dest = "NO_NET",
+		default = False, action = "store_true"
+	)
+	parser.add_argument(
+		"COMMAND",
+		nargs = "+"
+	)
+
+	args = parser.parse_args()
+	print("Args:", args, file = sys.stderr)
+
+	context = RunContext(args.COMMAND, os.environ)
+
+	if args.AMDGPU_PRO:
+		_apply_amdgpu_pro(context)
+	if args.AMDGPU_RTX:
+		_apply_amdgpu_raytracing(context)
+	if args.NO_NET:
+		_apply_nonet(context)
+
+	context.run()
+
+if __name__ == "__main__":
+	main()

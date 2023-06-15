@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/sh
 
 rand=$(($RANDOM % 2))
 if [ $rand -eq 0 ]; then

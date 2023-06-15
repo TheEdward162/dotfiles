@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# need sys-kernel/gentoo-sources
+# doas eselect kernel set <n>
+
+cp ./config /usr/src/linx/.config
 cd /usr/src/linux
 make menuconfig
 cd -

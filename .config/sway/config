@@ -1,6 +1,6 @@
 ## Input and output
 output * background "$HOME/Pictures/hexagon-fading.png" stretch
-output HDMI-A-1 resolution 1920x1080 position 0,0
+output HDMI-A-1 resolution 1920x1080@120Hz position 0,0
 
 input * {
 	xkb_layout "us,sk"
@@ -25,8 +25,8 @@ font pango:Fira Mono 9
 
 # gaps
 # smart_gaps on
-# gaps inner 5
-# gaps outer 5
+gaps inner 5
+gaps outer 5
 
 # colors
 set $base #000000
@@ -44,7 +44,7 @@ client.placeholder		#000000		#0c0c0c		#ffffff		#000000		#0c0c0c
 client.background		#FFFFFF
 
 # application specific
-#for_window [class="(?i)speedcrunch"] floating enable
+for_window [instance="Godot_Engine"] floating enable
 
 ## Bindings
 
@@ -61,7 +61,7 @@ set $mod Mod4
 bindsym $mod+Return exec "alacritty msg create-window || alacritty"
 bindsym $mod+Shift+Return exec firefox
 bindsym $mod+Shift+q kill
-bindsym $mod+d exec $menu
+bindsym $mod+d exec "wofi --show drun"
 
 floating_modifier $mod normal
 
@@ -122,9 +122,10 @@ bar {
 	status_command while "$HOME/.config/sway/swaybar-line"; do sleep 0.25s; done
 
 	colors {
-		statusline #ffffff
+		statusline #FFFFFF
 		background #323232
-		inactive_workspace #32323200 #32323200 #5c5c5c
+		focused_workspace #00E6AC #35B192 #FFFFFF
+		inactive_workspace #0C0C0C #0C0C0C #5c5c5c
 	}
 }
 
