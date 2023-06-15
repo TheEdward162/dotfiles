@@ -5,6 +5,8 @@ alias ls='exa'
 alias ll='exa -laag'
 alias yeet='rm -rf'
 
+set --universal --export EDITOR nano
+
 switch $system_preset
 case macos
 	alias need='brew install'

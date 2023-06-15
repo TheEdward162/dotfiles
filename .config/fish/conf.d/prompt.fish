@@ -20,7 +20,7 @@ function fish_prompt
 		set -f tags " {$tags}"
 	end
 
-	printf "$(set_color yellow)$PWD""$(set_color --bold white)$(fish_git_prompt)$(set_color normal)""$(set_color white)$tags$(set_color normal)""$(set_color --bold green) λ$(set_color normal) "
+	echo "$(set_color yellow)$PWD""$(set_color --bold white)$(fish_git_prompt)$(set_color normal)""$(set_color white)$tags$(set_color normal)""$(set_color --bold green) λ$(set_color normal) "
 end
 
 function fish_right_prompt
