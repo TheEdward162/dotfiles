@@ -29,10 +29,17 @@ def handle_lgcc_s(args):
 		args
 	)
 
+def remove_no_undefined_version(args):
+	return filter(
+		lambda arg: arg != "-Wl,--no-undefined-version",
+		args
+	)
+
 target = extract_target(sys.argv[0])
 args = sys.argv[1:]
 if "musl" in target:
 	args = remove_crti(args)
 args = handle_lgcc_s(args)
+args = remove_no_undefined_version(args)
 
 p = subprocess.run(["zig", "cc", "-target", target] + list(args), check = True)
