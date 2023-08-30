@@ -16,7 +16,7 @@ RUN <<EOF
     esac
 	zigName="zig-linux-${zigArch}-${ZIG_VERSION}"
 	wget --progress=bar:force "https://ziglang.org/download/0.11.0/${zigName}.tar.xz"
-	tar xJvf "${zigName}.tar.xz"
+	tar xJf "${zigName}.tar.xz"
 	mv "${zigName}/lib" /usr/local/lib/zig
 	mv "${zigName}/zig" /usr/local/bin/zig
 	rm -r "${zigName}.tar.xz" "$zigName"
