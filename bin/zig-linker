@@ -13,8 +13,13 @@ def extract_target(invocation):
 	raise RuntimeError(f"Unknown invocation format - cannot extract target \"{invocation}\"")
 
 def remove_crti(args):
+	REMOVE_SUFFIXES = [
+		"musl/lib/self-contained/rcrt1.o",
+		"musl/lib/self-contained/crti.o",
+		"musl/lib/self-contained/crt1.o"
+	]
 	return filter(
-		lambda arg: not (arg.endswith("musl/lib/self-contained/rcrt1.o") or arg.endswith("musl/lib/self-contained/crti.o")),
+		lambda arg: not any(arg.endswith(suffix) for suffix in REMOVE_SUFFIXES),
 		args
 	)
 
