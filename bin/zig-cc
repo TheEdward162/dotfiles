@@ -42,4 +42,7 @@ if "musl" in target:
 args = handle_lgcc_s(args)
 args = remove_no_undefined_version(args)
 
-p = subprocess.run(["zig", "cc", "-target", target] + list(args), check = True)
+cmd = ["zig", "cc", "-target", target] + list(args)
+p = subprocess.run(cmd, check = False)
+if p.returncode != 0:
+	raise RuntimeError(f"zig cc failed with return code {p.returncode}", cmd)

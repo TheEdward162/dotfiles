@@ -1,0 +1,82 @@
+ipc_socket = true
+live_config_reload = true
+
+[colors]
+transparent_background_colors = true
+
+[colors.bright]
+black = "#333333"
+blue = "#003AE6"
+cyan = "#00E6AC"
+green = "#3AE600"
+magenta = "#AC00E6"
+red = "#E6003A"
+white = "#AAAAAA"
+yellow = "#E6AC00"
+
+[colors.cursor]
+cursor = "#FFFFFF"
+text = "CellForeground"
+
+[colors.dim]
+black = "#FF0000"
+blue = "#FF0000"
+cyan = "#FF0000"
+green = "#FF0000"
+magenta = "#FF0000"
+red = "#FF0000"
+white = "#FF0000"
+yellow = "#FF0000"
+
+[colors.normal]
+black = "#000000"
+blue = "#003AE6"
+cyan = "#00E6AC"
+green = "#3AE600"
+magenta = "#AC00E6"
+red = "#E6003A"
+white = "#FFFFFF"
+yellow = "#E6AC00"
+
+[colors.primary]
+background = "#000000"
+foreground = "#EAEAEA"
+
+[colors.selection]
+background = "#FFFFFF"
+text = "CellForeground"
+
+[cursor]
+unfocused_hollow = true
+
+[cursor.style]
+blinking = "On"
+shape = "Block"
+
+[font]
+builtin_box_drawing = false
+size = 11.0
+
+[font.bold]
+family = "Fira Mono"
+
+[font.bold_italic]
+family = "Fira Mono"
+
+[font.italic]
+family = "Fira Mono"
+
+[font.normal]
+family = "Fira Mono"
+
+[scrolling]
+history = 10000
+
+[window]
+dynamic_padding = false
+dynamic_title = true
+opacity = 0.9
+
+[window.padding]
+x = 2
+y = 2

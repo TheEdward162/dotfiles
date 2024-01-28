@@ -29,6 +29,16 @@
 				"restart_on_success": false,
 				"max_count": 0
 			}
+		},
+		"wlsunset": {
+			"command": ["wlsunset", "-l", "50.0875", "-L", "14.421389"],
+			"stdout": "devnull",
+			"stderr": "devnull",
+			"retry": {
+				"restart_delay": 0,
+				"restart_on_success": false,
+				"max_count": 0
+			}
 		}
 	},
 	"groups": {
@@ -37,7 +47,8 @@
 			"pipewire-pulse": { "existing": "keep" }
 		},
 		"desktop": {
-			"wireplumber": { "existing": "replace" }
+			"wireplumber": { "existing": "replace" },
+			"wlsunset": { "existing": "replace" }
 		}
 	}
 }
