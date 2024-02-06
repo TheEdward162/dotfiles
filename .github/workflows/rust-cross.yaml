@@ -5,16 +5,7 @@ env:
   REGISTRY_IMAGE: ghcr.io/theedward162/rust-cross
 
 jobs:
-  per-platform:
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            platform: linux/amd64
-            tag_prefix: amd64
-          - os: macos-latest
-            platform: linux/arm64
-            tag_prefix: aarch64
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: read
