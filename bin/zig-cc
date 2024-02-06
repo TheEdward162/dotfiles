@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import re
 import sys
 import subprocess
 
@@ -35,12 +34,26 @@ def remove_no_undefined_version(args):
 		args
 	)
 
+def remove_target(args):
+	prev_was_target = False
+	for arg in args:
+		if prev_was_target:
+			prev_was_target = False
+			continue
+		if arg == "--target":
+			prev_was_target = True
+			continue
+		if arg.startswith("--target="):
+			continue
+		yield arg
+
 target = extract_target(sys.argv[0])
 args = sys.argv[1:]
 if "musl" in target:
 	args = remove_crti(args)
 args = handle_lgcc_s(args)
 args = remove_no_undefined_version(args)
+args = remove_target(args)
 
 cmd = ["zig", "cc", "-target", target] + list(args)
 p = subprocess.run(cmd, check = False)
