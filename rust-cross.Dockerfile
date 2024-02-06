@@ -1,9 +1,12 @@
-FROM rust:1.72-bookworm
+FROM rust:1.75-bookworm
 
 WORKDIR tmp
 
 # Add any needed toolchains here
-RUN rustup target add aarch64-unknown-linux-musl aarch64-unknown-linux-gnu x86_64-unknown-linux-gnu x86_64-unknown-linux-musl
+RUN rustup target add \
+	aarch64-unknown-linux-musl aarch64-unknown-linux-gnu \
+	x86_64-unknown-linux-musl x86_64-unknown-linux-gnu \
+	wasm32-wasi
 
 ARG ZIG_VERSION=0.11.0
 RUN <<EOF
