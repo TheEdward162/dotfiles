@@ -5,3 +5,5 @@ end
 function fish_greeting
 	
 end
+
+direnv hook fish | source
