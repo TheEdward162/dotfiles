@@ -9,21 +9,19 @@ RUN rustup target add \
 	wasm32-wasi
 
 # python3 is for zig-cc script
+# wget and xz-utils are for zig install
 # deriving images might need to install `crossbuild-essential-amd64` or `crossbuild-essential-arm64` as needed
 RUN <<EOF
 	set -e
 	apt-get update
-	apt-get install -y --no-install-recommends xz-utils
+	apt-get install -y --no-install-recommends python3 wget xz-utils
 	rm -rf /var/lib/apt/lists/*
 EOF
 
-# wget and xz-utils are for zig install
 # we cache the download in /tmp cache mount, when running this locally it saves time downloading the zig tar
 ARG ZIG_VERSION=0.11.0
 RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
 	set -e
-	apt-get update
-	apt-get install -y --no-install-recommends wget xz-utils
 	dpkgArch="$(dpkg --print-architecture)"
 	case "${dpkgArch##*-}" in
 		amd64) zigArch='x86_64' ;;
@@ -38,8 +36,6 @@ RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
 	mv "${zigName}/lib" /usr/local/lib/zig
 	mv "${zigName}/zig" /usr/local/bin/zig
 	rm -r "${zigName}"
-	apt-get purge --auto-remove -y wget xz-utils
-	rm -rf /var/lib/apt/lists/*
 EOF
 
 ENV CARGO_HOME=/var/cache/cargo-home

@@ -1,5 +1,11 @@
 name: "Rust Cross OCI"
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  inputs:
+    additional-tags:
+      description: "Additional tags for the image (comma separated list)"
+      required: false
+      type: string
 
 env:
   REGISTRY_IMAGE: ghcr.io/theedward162/rust-cross
@@ -28,5 +34,5 @@ jobs:
           context: .
           file: rust-cross.Dockerfile
           platforms: linux/amd64,linux/arm64
-          tags: ${{ env.REGISTRY_IMAGE }}:${{ github.sha }},${{ env.REGISTRY_IMAGE }}:latest
+          tags: ${{ env.REGISTRY_IMAGE }}:${{ github.sha }},${{ env.REGISTRY_IMAGE }}:latest,${{ inputs.additional-tags }}
           push: true

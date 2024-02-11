@@ -18,6 +18,7 @@ And set the global default to undefined, making git prompt for credentials on fi
 List of packages to install on new desktop systems
 
 - sway, swaybg, wofi
+- pipewire, wireplumbler
 - alacritty, nano, fish, eza
 - firefox, mpv
 - pass, 7zip, nextcloud
