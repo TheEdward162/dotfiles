@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+import os
 import sys
+import json
 import subprocess
 
 def extract_target(invocation):
@@ -48,14 +50,34 @@ def remove_target(args):
 		yield arg
 
 target = extract_target(sys.argv[0])
+# allow target to be:
+# "cc" - do not pass -target to zig command at all
+# "native" - pass as-is (zig will choose the native target, ideally the same as not passing it at all)
+# <native> - target specifier that matches the native target, or a subset of it - change to "native", otherwise it breaks stuff
+# <other> - pass as-is
+cmd = ["zig", "cc"]
+
+targets_p = subprocess.run(["zig", "targets"], check = True, stdout = subprocess.PIPE)
+targets = json.loads(targets_p.stdout)
+native_target = targets["native"]["cpu"]["arch"] + "-" + targets["native"]["os"] + "-" + targets["native"]["abi"]
+
+# TODO: this `not in` condition doesn't work for something like `x86_64-gnu`
+if target != "cc" and target not in native_target:
+	cmd += ["-target", target]
+
 args = sys.argv[1:]
 if "musl" in target:
 	args = remove_crti(args)
 args = handle_lgcc_s(args)
 args = remove_no_undefined_version(args)
 args = remove_target(args)
+cmd += list(args)
 
-cmd = ["zig", "cc", "-target", target] + list(args)
+if "ZIG_CC_DRY_RUN" in os.environ:
+	print("zig-cc would run:", cmd)
+	exit(0)
+
 p = subprocess.run(cmd, check = False)
 if p.returncode != 0:
-	raise RuntimeError(f"zig cc failed with return code {p.returncode}", cmd)
+	exit(p.returncode)
+	# raise RuntimeError(f"zig cc failed with return code {p.returncode}", cmd)

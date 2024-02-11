@@ -9,18 +9,21 @@ RUN rustup target add \
 	wasm32-wasi
 
 # python3 is for zig-cc script
-# wget and xz-utils are for zig install - TODO: should we uninstall them after?
 # deriving images might need to install `crossbuild-essential-amd64` or `crossbuild-essential-arm64` as needed
 RUN <<EOF
 	set -e
 	apt-get update
-	apt-get install -y --no-install-recommends python3 wget xz-utils
+	apt-get install -y --no-install-recommends xz-utils
 	rm -rf /var/lib/apt/lists/*
 EOF
 
+# wget and xz-utils are for zig install
+# we cache the download in /tmp cache mount, when running this locally it saves time downloading the zig tar
 ARG ZIG_VERSION=0.11.0
 RUN --mount=type=cache,target=/tmp <<EOF
 	set -e
+	apt-get update
+	apt-get install -y --no-install-recommends wget xz-utils
 	dpkgArch="$(dpkg --print-architecture)"
 	case "${dpkgArch##*-}" in
 		amd64) zigArch='x86_64' ;;
@@ -35,6 +38,8 @@ RUN --mount=type=cache,target=/tmp <<EOF
 	mv "${zigName}/lib" /usr/local/lib/zig
 	mv "${zigName}/zig" /usr/local/bin/zig
 	rm -r "${zigName}"
+	apt-get purge --auto-remove -y wget xz-utils
+	rm -rf /var/lib/apt/lists/*
 EOF
 
 ENV CARGO_HOME=/var/cache/cargo-home
@@ -43,21 +48,10 @@ ENV CARGO_TARGET_DIR=/var/cache/cargo-target
 COPY bin/zig-cc /usr/local/bin/zig-cc
 RUN <<EOF
 	set -e
-	ln -s /usr/local/bin/zig-cc /usr/local/bin/zig-native
 	ln -s /usr/local/bin/zig-cc /usr/local/bin/zig-aarch64-linux-gnu
 	ln -s /usr/local/bin/zig-cc /usr/local/bin/zig-aarch64-linux-musl
 	ln -s /usr/local/bin/zig-cc /usr/local/bin/zig-x86_64-linux-gnu
 	ln -s /usr/local/bin/zig-cc /usr/local/bin/zig-x86_64-linux-musl
-	
-	dpkgArch="$(dpkg --print-architecture)"
-	# resolve which target is native and use special `native` zig target because otherwise Very Weird Things happen
-	amd64GnuLinker='zig-x86_64-linux-gnu'
-	aarch64GnuLinker='zig-aarch64-linux-gnu'
-	case "${dpkgArch##*-}" in
-		amd64) amd64GnuLinker='zig-native' ;;
-		arm64) aarch64GnuLinker='zig-native' ;;
-		*) echo >&2 "unsupported architecture: ${dpkgArch}"; exit 1 ;;
-	esac
 
 	mkdir /.cargo
 	cat <<EOF2 >/.cargo/config.toml
@@ -67,9 +61,9 @@ linker = "zig-x86_64-linux-musl"
 linker = "zig-aarch64-linux-musl"
 
 [target.x86_64-unknown-linux-gnu]
-linker = "${amd64GnuLinker}"
+linker = "zig-x86_64-linux-gnu"
 [target.aarch64-unknown-linux-gnu]
-linker = "${aarch64GnuLinker}"
+linker = "zig-aarch64-linux-gnu"
 EOF2
 EOF
 

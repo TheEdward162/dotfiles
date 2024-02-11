@@ -12,3 +12,14 @@ Don't let git autogenerate emails for newly cloned repositories.
 And set the global default to undefined, making git prompt for credentials on first commit.
 
 `legit config --global user.name ''; legit config --global user.email ''`
+
+## Packages
+
+List of packages to install on new desktop systems
+
+- sway, swaybg, wofi
+- alacritty, nano, fish, eza
+- firefox, mpv
+- pass, 7zip, nextcloud
+- rustup, zig, httpie, kicad
+- speedcrunch, htop, ncdu
