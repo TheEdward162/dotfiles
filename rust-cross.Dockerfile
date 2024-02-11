@@ -1,6 +1,6 @@
 FROM rust:1.75-slim-bookworm
 
-WORKDIR /tmp
+WORKDIR /tmp/rust-cross
 
 # Add any needed toolchains here
 RUN rustup target add \
@@ -20,7 +20,7 @@ EOF
 # wget and xz-utils are for zig install
 # we cache the download in /tmp cache mount, when running this locally it saves time downloading the zig tar
 ARG ZIG_VERSION=0.11.0
-RUN --mount=type=cache,target=/tmp <<EOF
+RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
 	set -e
 	apt-get update
 	apt-get install -y --no-install-recommends wget xz-utils
