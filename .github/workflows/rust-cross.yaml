@@ -34,5 +34,5 @@ jobs:
           context: .
           file: rust-cross.Dockerfile
           platforms: linux/amd64,linux/arm64
-          tags: ${{ env.REGISTRY_IMAGE }}:${{ github.sha }},${{ env.REGISTRY_IMAGE }}:latest,${{ input.additional-tags }}
+          tags: ${{ env.REGISTRY_IMAGE }}:${{ github.sha }},${{ env.REGISTRY_IMAGE }}:latest,${{ inputs.additional-tags }}
           push: true
