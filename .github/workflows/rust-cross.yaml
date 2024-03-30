@@ -8,7 +8,7 @@ on:
         type: string
       channel:
         description: "Channel to tag the image with"
-        type: string
+        type: choice
         options: ["latest", "nightly"]
 
 env:
