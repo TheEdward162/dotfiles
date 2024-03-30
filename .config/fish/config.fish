@@ -3,7 +3,7 @@ if status is-interactive
 end
 
 function fish_greeting
-	
+	fortune | cowsay -f moose.cow | lolcat
 end
 
 direnv hook fish | source

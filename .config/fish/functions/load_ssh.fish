@@ -1,7 +1,7 @@
 switch $system_preset
 case macos
 	function load_ssh
-		ssh-add ~/.ssh/wadebook2 ~/.ssh/id_ed25519_applifting
+		ssh-add ~/.ssh/id_ed25519_applifting ~/.ssh/wadebook2
 	end
 case linux
 	function load_ssh
