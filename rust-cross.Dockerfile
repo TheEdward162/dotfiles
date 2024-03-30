@@ -1,8 +1,9 @@
-FROM rust:1.77-slim-bookworm
+FROM rust:slim-bookworm
 
 WORKDIR /tmp/rust-cross
 
-# Add any needed toolchains here
+ARG RUST_TOOLCHAIN=stable
+RUN rustup default "$RUST_TOOLCHAIN"
 RUN rustup target add \
 	aarch64-unknown-linux-musl aarch64-unknown-linux-gnu \
 	x86_64-unknown-linux-musl x86_64-unknown-linux-gnu \

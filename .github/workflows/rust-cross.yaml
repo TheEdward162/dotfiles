@@ -36,3 +36,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ env.REGISTRY_IMAGE }}:${{ github.sha }},${{ env.REGISTRY_IMAGE }}:latest,${{ env.REGISTRY_IMAGE }}:${{ inputs.version }}
           push: true
+          build-args:
+            - "RUST_TOOLCHAIN=${{ inputs.version }}"
