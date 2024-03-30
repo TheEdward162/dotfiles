@@ -1,4 +1,4 @@
-FROM rust:1.75-slim-bookworm
+FROM rust:1.77-slim-bookworm
 
 WORKDIR /tmp/rust-cross
 
@@ -6,7 +6,7 @@ WORKDIR /tmp/rust-cross
 RUN rustup target add \
 	aarch64-unknown-linux-musl aarch64-unknown-linux-gnu \
 	x86_64-unknown-linux-musl x86_64-unknown-linux-gnu \
-	wasm32-wasi
+	wasm32-unknown-unknown wasm32-wasi
 
 # python3 is for zig-cc script
 # wget and xz-utils are for zig install
