@@ -15,7 +15,7 @@ RUN rustup target add \
 RUN <<EOF
 	set -e
 	apt-get update
-	apt-get install -y --no-install-recommends python3 wget xz-utils
+	apt-get install -y --no-install-recommends python3 wget xz-utils git
 	rm -rf /var/lib/apt/lists/*
 EOF
 
