@@ -3,7 +3,7 @@ FROM rust:slim-bookworm
 WORKDIR /tmp/rust-cross
 
 ARG RUST_TOOLCHAIN=stable
-RUN rustup default "$RUST_TOOLCHAIN"
+RUN rustup default "$RUST_TOOLCHAIN" && rustup component add rust-src
 RUN rustup target add \
 	aarch64-unknown-linux-musl aarch64-unknown-linux-gnu \
 	x86_64-unknown-linux-musl x86_64-unknown-linux-gnu \
