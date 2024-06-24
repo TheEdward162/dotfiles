@@ -1,6 +1,6 @@
 ## Input and output
 output * background "$HOME/Pictures/hexagon-fading.png" stretch
-output HDMI-A-1 resolution 1920x1080@120Hz position 0,0
+output DP-2 resolution 1920x1080@120Hz position 0,0
 
 input * {
 	xkb_layout "us,sk"

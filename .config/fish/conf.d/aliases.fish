@@ -15,11 +15,13 @@ case macos
 
 	alias code='codium'
 case linux
-	alias has='xbps-query -Rs'
-	alias has-files='xbps-query --files'
-	alias need='sudo xbps-install -S'
-	alias needu='need -u'
-	alias begone='sudo xbps-remove'
+	alias has='/sbin/apk search'
+	alias need='doas /sbin/apk add'
+	alias needu='doas sh -c \'apk update && apk upgrade\''
+	alias begone='doas /sbin/apk del'
 
 	alias code='code-oss'
+
+	alias reboot='doas /sbin/reboot'
+	alias poweroff='doas /sbin/poweroff'
 end

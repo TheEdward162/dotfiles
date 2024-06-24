@@ -58,16 +58,13 @@ builtin_box_drawing = false
 size = 11.0
 
 [font.bold]
-family = "Fira Mono"
 
 [font.bold_italic]
-family = "Fira Mono"
 
 [font.italic]
-family = "Fira Mono"
 
 [font.normal]
-family = "Fira Mono"
+family = "Fira Mono Nerd Font"
 
 [scrolling]
 history = 10000

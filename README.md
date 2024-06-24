@@ -24,3 +24,5 @@ List of packages to install on new desktop systems
 - pass, 7zip, nextcloud
 - rustup, zig, httpie, kicad
 - speedcrunch, htop, ncdu
+
+- musl-dev, perl

@@ -57,19 +57,16 @@ font:
   # Normal (roman) font face
   normal:
     # Font family
-    family: Fira Mono
+    family: Fira Mono Nerd Font
 
   # Bold font face
-  bold:
-    family: Fira Mono
+  bold: {}
 
   # Italic font face
-  italic:
-    family: Fira Mono
+  italic: {}
 
   # Bold italic font face
-  bold_italic:
-    family: Fira Mono
+  bold_italic: {}
 
   # Point size
   size: 11.0

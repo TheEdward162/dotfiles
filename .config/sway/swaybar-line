@@ -2,5 +2,6 @@
 
 DATE=$(date +'%Y-%m-%d %H:%M:%S')
 VOLUME=$(wpctl get-volume '@DEFAULT_SINK@')
+LOAD_AVG=$(cat /proc/loadavg | cut -d ' ' -f 0)
 
-printf '%s  %s \n' "$VOLUME" "$DATE"
+printf "LA1: ${LOAD_AVG}    ${VOLUME}    ${DATE}  🦄\n"
