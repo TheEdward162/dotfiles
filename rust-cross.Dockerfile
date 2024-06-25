@@ -11,11 +11,12 @@ RUN rustup target add \
 
 # python3 is for zig-cc script
 # wget and xz-utils are for zig install
+# pkg-config and libssl-dev for cargo component
 # deriving images might need to install `crossbuild-essential-amd64` or `crossbuild-essential-arm64` as needed
 RUN <<EOF
 	set -e
 	apt-get update
-	apt-get install -y --no-install-recommends python3 wget xz-utils git
+	apt-get install -y --no-install-recommends python3 wget xz-utils git pkg-config libssl-dev
 	rm -rf /var/lib/apt/lists/*
 EOF
 
@@ -52,6 +53,8 @@ RUN <<EOF
 
 	mkdir /.cargo
 	cat <<EOF2 >/.cargo/config.toml
+[install]
+root = "/.cargo"
 [target.x86_64-unknown-linux-musl]
 linker = "zig-x86_64-linux-musl"
 [target.aarch64-unknown-linux-musl]
@@ -63,6 +66,8 @@ linker = "zig-x86_64-linux-gnu"
 linker = "zig-aarch64-linux-gnu"
 EOF2
 EOF
+
+RUN cargo install cargo-component
 
 # use zig as CC for cross compilation as well, that way we don't need cross-compilation gccs
 ENV CC_x86_64_unknown_linux_musl=zig-x86_64-linux-musl
