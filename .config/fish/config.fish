@@ -3,7 +3,8 @@ if status is-interactive
 end
 
 function fish_greeting
-	fortune | cowsay -f moose.cow | lolcat
+	set joke (curl --silent --max-time 1 -H "Accept: text/plain" https://icanhazdadjoke.com/ || fortune)
+	echo $joke | cowsay -f moose.cow | lolcat
 end
 
 direnv hook fish | source
