@@ -43,7 +43,7 @@ def process_input(string):
 			continue
 		except UnicodeDecodeError:
 			hex_bytes = binascii.b2a_hex(part_bytes, " ", 1).decode("utf-8")
-			yield f"{part} : {ignored}"
+			yield f"{part} : {hex_bytes}"
 			continue
 
 def main(string):
