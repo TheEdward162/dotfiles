@@ -4,6 +4,7 @@ alias legut='git'
 alias ls='exa'
 alias ll='exa -laag'
 alias yeet='rm -rf'
+alias bat='bat --theme ansi'
 
 set --universal --export EDITOR nano
 

@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+
+import sys
+import binascii
+
+ALPHABET_BASE = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/="
+
+REMARKS = []
+
+# split input into base64-valid and invalid intervals
+def split_input(string):
+	start = 0
+	current = 0
+	while current < len(string):
+		while current < len(string) and string[current] in ALPHABET_BASE:
+			current += 1
+		yield (string[start:current], True)
+		start = current
+		while current < len(string) and string[current] not in ALPHABET_BASE:
+			current += 1
+		if start < current:
+			yield (string[start:current], False)
+			start = current
+
+def process_input(string):
+	for (part, is_valid) in split_input(string):
+		if not is_valid:
+			yield part
+			continue
+
+		rem = len(part) % 4
+		if rem > 0:
+			part_bytes = binascii.a2b_base64(part + "=" * (4 - rem))
+		else:
+			part_bytes = binascii.a2b_base64(part)
+		if len(part_bytes) == 0:
+			yield f"{part} : ''"
+			continue
+
+		try:
+			unicode = part_bytes.decode("utf-8")
+			yield f"{part} : {unicode}"
+			continue
+		except UnicodeDecodeError:
+			hex_bytes = binascii.b2a_hex(part_bytes, " ", 1).decode("utf-8")
+			yield f"{part} : {ignored}"
+			continue
+
+def main(string):
+	string = string.replace("-", "+").replace("_", "/")
+	for part in process_input(string):
+		print(part)
+
+main(sys.stdin.read())
