@@ -1,7 +1,7 @@
-ARG BASE_OS
+ARG BASE_OS=slim-bookworm
 FROM rust:$BASE_OS
 
-ARG BASE_OS
+ARG BASE_OS=slim-bookworm
 ARG TARGETARCH
 
 WORKDIR /tmp/rust-cross
