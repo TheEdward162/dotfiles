@@ -44,5 +44,5 @@ jobs:
           tags: ${{ env.REGISTRY_IMAGE }}:${{ github.sha }}-${{ matrix.base_os }},${{ env.REGISTRY_IMAGE }}:${{ inputs.channel }}-${{ matrix.base_os }},${{ env.REGISTRY_IMAGE }}:${{ inputs.version }}-${{ matrix.base_os }}
           push: true
           build-args: |
-            BASE_OS=${{ matris.base_os }}
+            BASE_OS=${{ matrix.base_os }}
             RUST_TOOLCHAIN=${{ inputs.version }}
