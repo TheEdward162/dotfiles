@@ -7,7 +7,7 @@ RUN rustup default "$RUST_TOOLCHAIN" && rustup component add rust-src
 RUN rustup target add \
 	aarch64-unknown-linux-musl aarch64-unknown-linux-gnu \
 	x86_64-unknown-linux-musl x86_64-unknown-linux-gnu \
-	wasm32-unknown-unknown wasm32-wasi
+	wasm32-unknown-unknown wasm32-wasip1 wasm32-wasip2
 
 # python3 is for zig-cc script
 # wget and xz-utils are for zig and cargo-component install
@@ -65,8 +65,8 @@ linker = "zig-aarch64-linux-gnu"
 EOF2
 EOF
 
-# https://github.com/bytecodealliance/cargo-component/releases/download/v0.13.2/cargo-component-aarch64-unknown-linux-gnu
-ARG CARGO_COMPONENT_VERSION=0.13.2
+# https://github.com/bytecodealliance/cargo-component/releases/download/v0.19.0/cargo-component-aarch64-unknown-linux-gnu
+ARG CARGO_COMPONENT_VERSION=0.19.0
 RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
 	set -e
 
