@@ -1,4 +1,8 @@
-FROM rust:slim-bookworm
+ARG BASE_OS
+FROM rust:$BASE_OS
+
+ARG BASE_OS
+ARG TARGETARCH
 
 WORKDIR /tmp/rust-cross
 
@@ -10,24 +14,32 @@ RUN rustup target add \
 	wasm32-unknown-unknown wasm32-wasip1 wasm32-wasip2
 
 # python3 is for zig-cc script
-# wget and xz-utils are for zig and cargo-component install
-# deriving images might need to install `crossbuild-essential-amd64` or `crossbuild-essential-arm64` as needed
+# wget and xz are for zig and cargo-component install
+# deriving images might need to install `crossbuild-essential-amd64` or `crossbuild-essential-arm64` as needed (on debian)
 RUN <<EOF
 	set -e
-	apt-get update
-	apt-get install -y --no-install-recommends python3 wget xz-utils git
-	rm -rf /var/lib/apt/lists/*
+
+	case "$BASE_OS" in
+		alpine*)
+			apk update
+			apk add --no-cache python3 wget xz git
+		;;
+		*)
+			apt-get update
+			apt-get install -y --no-install-recommends python3 wget xz-utils git
+			rm -rf /var/lib/apt/lists/*
+		;;
+	esac
 EOF
 
 ARG ZIG_VERSION=0.13.0
 RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
 	set -e
 
-	dpkgArch="$(dpkg --print-architecture)"
-	case "${dpkgArch##*-}" in
+	case "$TARGETARCH" in
 		amd64) zigArch='x86_64' ;;
 		arm64) zigArch='aarch64' ;;
-		*) echo >&2 "unsupported architecture: ${dpkgArch}"; exit 1 ;;
+		*) echo >&2 "unsupported architecture: $TARGETARCH"; exit 1 ;;
 	esac
 	zigName="zig-linux-${zigArch}-${ZIG_VERSION}"
 	if [ ! -f "${zigName}.tar.xz" ]; then
@@ -70,11 +82,10 @@ ARG CARGO_COMPONENT_VERSION=0.19.0
 RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
 	set -e
 
-	dpkgArch="$(dpkg --print-architecture)"
-	case "${dpkgArch##*-}" in
+	case "$TARGETARCH" in
 		amd64) binArch='x86_64-unknown-linux-gnu' ;;
 		arm64) binArch='aarch64-unknown-linux-gnu' ;;
-		*) echo >&2 "unsupported architecture: ${dpkgArch}"; exit 1 ;;
+		*) echo >&2 "unsupported architecture: $TARGETARCH"; exit 1 ;;
 	esac
 	binName="cargo-component-${binArch}"
 	if [ ! -f "${binName}" ]; then

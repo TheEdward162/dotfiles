@@ -16,6 +16,9 @@ env:
 
 jobs:
   release:
+    strategy:
+      matrix:
+        base_os: [slim-bookworm, alpine3.21]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,11 +36,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: rust-cross.Dockerfile
           platforms: linux/amd64,linux/arm64
-          tags: ${{ env.REGISTRY_IMAGE }}:${{ github.sha }},${{ env.REGISTRY_IMAGE }}:${{ inputs.channel }},${{ env.REGISTRY_IMAGE }}:${{ inputs.version }}
+          tags: ${{ env.REGISTRY_IMAGE }}:${{ github.sha }}-${{ matrix.base_os }},${{ env.REGISTRY_IMAGE }}:${{ inputs.channel }}-${{ matrix.base_os }},${{ env.REGISTRY_IMAGE }}:${{ inputs.version }}-${{ matrix.base_os }}
           push: true
-          build-args: "RUST_TOOLCHAIN=${{ inputs.version }}"
+          build-args: |
+            BASE_OS=${{ matris.base_os }}
+            RUST_TOOLCHAIN=${{ inputs.version }}
