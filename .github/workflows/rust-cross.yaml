@@ -1,4 +1,4 @@
-name: "Rust Cross OCI"
+name: "Rust Cross"
 on:
   workflow_dispatch:
     inputs:
@@ -18,7 +18,13 @@ jobs:
   release:
     strategy:
       matrix:
-        base_os: [slim-bookworm, alpine3.21]
+        base: 
+          - os: slim-bookworm
+            image: rust
+          - os: alpine3.21
+            image: rust
+          - os: slim-trixie
+            image: ghcr.io/theedward162/rust
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -39,10 +45,11 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: rust-cross.Dockerfile
+          file: rust-cross/rust-cross.Dockerfile
           platforms: linux/amd64,linux/arm64
-          tags: ${{ env.REGISTRY_IMAGE }}:${{ github.sha }}-${{ matrix.base_os }},${{ env.REGISTRY_IMAGE }}:${{ inputs.channel }}-${{ matrix.base_os }},${{ env.REGISTRY_IMAGE }}:${{ inputs.version }}-${{ matrix.base_os }}
+          tags: ${{ env.REGISTRY_IMAGE }}:${{ github.sha }}-${{ matrix.base.os }},${{ env.REGISTRY_IMAGE }}:${{ inputs.channel }}-${{ matrix.base.os }},${{ env.REGISTRY_IMAGE }}:${{ inputs.version }}-${{ matrix.base.os }}
           push: true
           build-args: |
-            BASE_OS=${{ matrix.base_os }}
+            BASE_IMAGE=${{ matrix.base.image }}
+            BASE_OS=${{ matrix.base.os }}
             RUST_TOOLCHAIN=${{ inputs.version }}

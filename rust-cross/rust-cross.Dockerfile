@@ -1,5 +1,6 @@
+ARG BASE_IMAGE=rust
 ARG BASE_OS=slim-bookworm
-FROM rust:$BASE_OS
+FROM $BASE_IMAGE:$BASE_OS
 
 ARG BASE_OS=slim-bookworm
 ARG TARGETARCH
@@ -22,7 +23,7 @@ RUN <<EOF
 	case "$BASE_OS" in
 		alpine*)
 			apk update
-			apk add --no-cache python3 wget xz git
+			apk add --no-cache python3 wget xz git musl-dev
 		;;
 		*)
 			apt-get update
