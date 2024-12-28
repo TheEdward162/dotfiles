@@ -1,3 +1,4 @@
 hostname foo
 wifi ssid password
 ssh ssh-ed25519 1234 host
+apkrepo https://eu.edge.kernel.org/alpine/v3.18

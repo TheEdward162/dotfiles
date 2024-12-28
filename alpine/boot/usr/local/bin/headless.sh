@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 BOOT_PATH='/media/mmcblk0p1'
 
 _log() {
@@ -22,18 +24,18 @@ runlevel() {
 
 networking() {
 	_log "Setting up hostname"
-	HOSTNAME=$(awk '($1 == "hostname") { print $2 }' $CONFIG_FILE)
-	echo $HOSTNAME >/etc/hostname
+	local hostname=$(awk '($1 == "hostname") { print $2 }' $CONFIG_FILE)
+	echo $hostname >/etc/hostname
 	hostname -F /etc/hostname
 
-	_log "Setting up networking for $HOSTNAME"
-cat << EOF >/etc/network/interfaces
+	_log "Setting up networking for $hostname"
+	cat << EOF >/etc/network/interfaces
 auto lo
 iface lo inet loopback
 
 auto wlan0
 iface wlan0 inet dhcp
-hostname $HOSTNAME
+hostname $hostname
 EOF
 	rc-update add networking network
 	rc-service networking restart
@@ -42,12 +44,13 @@ EOF
 wifi() {
 	_log "Setting up wifi"
 	apk add wpa_supplicant
-	
+
 	local conf_file=/etc/wpa_supplicant/wpa_supplicant.conf
 	local ctrl_dir=/var/run/wpa_supplicant
 	_log "Generating passphrases"
 	mkdir -p /etc/wpa_supplicant
-cat << EOF >$conf_file
+	cat << EOF >$conf_file
+country=de
 ctrl_interface=DIR=$ctrl_dir GROUP=wheel
 EOF
 	awk '($1 == "wifi") { print $2,$3 }' $CONFIG_FILE | xargs -n 2 wpa_passphrase >>$conf_file
@@ -69,15 +72,16 @@ EOF
 	done
 }
 
-apk_update() {
-	_log "Running apk update"
+apk_setup() {
+	_log "Setting up apk"
 	setup-apkcache "$BOOT_PATH/apkcache"
 
-cat << EOF >/etc/apk/repositories
+	local apkrepo=$(awk '($1 == "apkrepo") { print $2 }' $CONFIG_FILE)
+	cat << EOF >/etc/apk/repositories
 $BOOT_PATH/apks
 
-https://eu.edge.kernel.org/alpine/v3.18/main
-https://eu.edge.kernel.org/alpine/v3.18/community
+$apkrepo/main
+$apkrepo/community
 EOF
 
 	apk update
@@ -87,11 +91,12 @@ ssh_keys() {
 	_log "Setting up ssh keys"
 	mkdir -p /root/.ssh
 	awk '($1 == "ssh") { print $2,$3,$4 }' $CONFIG_FILE >>/root/.ssh/authorized_keys
+	_log "Authorized keys:\n" $(cat /root/.ssh/authorized_keys)
 }
 
 sshd() {
 	_log "Setting up sshd"
-	apk add dropbear openssh-sftp-server # dropbear-scp
+	apk add dropbear dropbear-scp # openssh-sftp-server dropbear-scp
 	echo 'DROPBEAR_OPTS="-s -p 4222"' >>/etc/conf.d/dropbear
 	rc-update add dropbear network
 	rc-service dropbear restart
@@ -104,16 +109,24 @@ chrony() {
 	rc-service chronyd restart
 }
 
+# set up the basics and get online
 runlevel
 networking
 wifi
 
-apk_update
+# start by setting up ntp and remote sources
+chrony
+apk_setup
 
+# then setup up ssh (fetches dropbear)
 ssh_keys
 sshd
 
-chrony
-
 _log "Done"
 rc-update del headless default
+
+# don't forget to modify:
+# /etc/motd
+# /etc/fstab
+# /etc/inittab
+# if setting up lbu: lbu add /root/.ssh/authorized_keys

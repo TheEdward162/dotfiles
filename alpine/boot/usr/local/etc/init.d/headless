@@ -3,8 +3,8 @@
 name="headless"
 command="/usr/local/bin/headless.sh"
 command_background=true
-output_log="/tmp/${RC_SVCNAME}.log"
-# error_log="/tmp/${RC_SVCNAME}.log"
+output_log="/tmp/${RC_SVCNAME}.stdout.log"
+error_log="/tmp/${RC_SVCNAME}.stderr.log"
 pidfile="/run/${RC_SVCNAME}.pid"
 
 start_post() {
@@ -13,6 +13,10 @@ start_post() {
 	done
 	einfo "Headless log:"
 	cat "$output_log"
+
+	# apk add wget
+	# wget -O /dev/null http://192.168.0.191:8080/stdout/$(base64 -w 0 $output_log)
+	# wget -O /dev/null http://192.168.0.191:8080/stderr/$(base64 -w 0 $error_log)
 }
 
 stop() {
