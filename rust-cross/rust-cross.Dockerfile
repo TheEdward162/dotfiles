@@ -1,60 +1,80 @@
-ARG BASE_IMAGE=rust
-ARG BASE_OS=slim-bookworm
-FROM $BASE_IMAGE:$BASE_OS
+ARG BASE_IMAGE=debian
+ARG BASE_TAG=bookworm-slim
+FROM $BASE_IMAGE:$BASE_TAG
 
-ARG BASE_OS=slim-bookworm
+LABEL org.opencontainers.image.source=https://github.com/TheEdward162/dotfiles
+
+ARG BASE_IMAGE=debian
 ARG TARGETARCH
 
 WORKDIR /tmp/rust-cross
 
-## BASE SETUP (toolchain + extra os packages)
-
+## OS SETUP
 ARG RUST_TOOLCHAIN=stable
-RUN rustup default "$RUST_TOOLCHAIN" && rustup component add rust-src
-RUN rustup target add \
+
+ENV RUSTUP_HOME=/usr/local/rustup
+ENV CARGO_HOME=/usr/local/cargo
+ENV PATH=/usr/local/cargo/bin:$PATH
+
+# python3 is for zig-cc script
+# wget and xz are for downloading extra binaries (zig, cargo-binstall, cargo-component)
+# deriving images might need to install `crossbuild-essential-amd64` or `crossbuild-essential-arm64` as needed (on debian)
+RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
+	set -e
+
+	case "$BASE_IMAGE" in
+		alpine)
+			libc_flavor=musl
+			apk update
+			apk add --no-cache ca-certificates binutils musl-dev python3 wget xz git
+		;;
+		debian)
+			libc_flavor=gnu
+			apt-get update
+			apt-get install -y --no-install-recommends ca-certificates binutils python3 wget xz-utils git
+			rm -rf /var/lib/apt/lists/*
+		;;
+	esac
+
+	case "$TARGETARCH" in
+		amd64) rust_arch="x86_64-unknown-linux-$libc_flavor" ;;
+		arm64) rust_arch="aarch64-unknown-linux-$libc_flavor" ;;
+		*) echo >&2 "unsupported architecture: $TARGETARCH"; exit 1 ;;
+	esac
+
+	wget "https://static.rust-lang.org/rustup/archive/1.27.1/${rust_arch}/rustup-init"
+	chmod +x rustup-init
+	./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_TOOLCHAIN --default-host $rust_arch
+	chmod -R a+w $RUSTUP_HOME $CARGO_HOME
+EOF
+
+## RUST SETUP
+
+RUN rustup component add rust-src && rustup target add \
 	aarch64-unknown-linux-musl aarch64-unknown-linux-gnu \
 	x86_64-unknown-linux-musl x86_64-unknown-linux-gnu \
 	wasm32-unknown-unknown wasm32-wasip1 wasm32-wasip2
 
-# python3 is for zig-cc script
-# wget and xz are for zig and cargo-component install
-# deriving images might need to install `crossbuild-essential-amd64` or `crossbuild-essential-arm64` as needed (on debian)
-RUN <<EOF
-	set -e
-
-	case "$BASE_OS" in
-		alpine*)
-			apk update
-			apk add --no-cache python3 wget xz git musl-dev
-		;;
-		*)
-			apt-get update
-			apt-get install -y --no-install-recommends python3 wget xz-utils git
-			rm -rf /var/lib/apt/lists/*
-		;;
-	esac
-EOF
-
 ## ZIG SETUP
-
 ARG ZIG_VERSION=0.13.0
+
 RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
 	set -e
 
 	case "$TARGETARCH" in
-		amd64) zigArch='x86_64' ;;
-		arm64) zigArch='aarch64' ;;
+		amd64) zig_arch='x86_64' ;;
+		arm64) zig_arch='aarch64' ;;
 		*) echo >&2 "unsupported architecture: $TARGETARCH"; exit 1 ;;
 	esac
-	zigName="zig-linux-${zigArch}-${ZIG_VERSION}"
-	if [ ! -f "${zigName}.tar.xz" ]; then
-		wget --progress=bar:force "https://ziglang.org/download/${ZIG_VERSION}/${zigName}.tar.xz"
+	zig_name="zig-linux-${zig_arch}-${ZIG_VERSION}"
+	if [ ! -f "${zig_name}.tar.xz" ]; then
+		wget --progress=bar:force "https://ziglang.org/download/${ZIG_VERSION}/${zig_name}.tar.xz"
 	fi
 
-	tar xJf "${zigName}.tar.xz"
-	mv "${zigName}/lib" /usr/local/lib/zig
-	mv "${zigName}/zig" /usr/local/bin/zig
-	rm -r "${zigName}"
+	tar xJf "${zig_name}.tar.xz"
+	mv "${zig_name}/lib" /usr/local/lib/zig
+	mv "${zig_name}/zig" /usr/local/bin/zig
+	rm -r "${zig_name}"
 EOF
 
 COPY bin/zig-cc /usr/local/bin/zig-cc
@@ -80,32 +100,31 @@ EOF2
 EOF
 
 ## CARGO SUBCOMMANDS
+ARG CARGO_BINSTALL_VERSION=v1.10.18
+ARG CARGO_COMPONENT_VERSION=0.19.0
 
 # https://github.com/cargo-bins/cargo-binstall/releases/download/v1.10.18/cargo-binstall-aarch64-unknown-linux-musl.tgz
-ARG CARGO_BINSTALL_VERSION=v1.10.18
-RUN <<EOF
+RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
 	set -e
 
 	case "$TARGETARCH" in
-		amd64) binArch='x86_64-unknown-linux-musl' ;;
-		arm64) binArch='aarch64-unknown-linux-musl' ;;
+		amd64) bin_arch='x86_64-unknown-linux-musl' ;;
+		arm64) bin_arch='aarch64-unknown-linux-musl' ;;
 		*) echo >&2 "unsupported architecture: $TARGETARCH"; exit 1 ;;
 	esac
-	binName="cargo-binstall-${binArch}"
-	if [ ! -f "${binName}.tgz" ]; then
-		wget --progress=bar:force "https://github.com/cargo-bins/cargo-binstall/releases/download/${CARGO_BINSTALL_VERSION}/${binName}.tgz"
+	bin_name="cargo-binstall-${bin_arch}"
+	if [ ! -f "${bin_name}.tgz" ]; then
+		wget --progress=bar:force "https://github.com/cargo-bins/cargo-binstall/releases/download/${CARGO_BINSTALL_VERSION}/${bin_name}.tgz"
 	fi
 
-	tar xzf "${binName}.tgz"
-	mv cargo-binstall /usr/local/cargo/bin/cargo-binstall
+	tar xzf "${bin_name}.tgz"
+	mv cargo-binstall $CARGO_HOME/bin/cargo-binstall
 EOF
 
-ARG CARGO_COMPONENT_VERSION=0.19.0
-RUN cargo binstall --install-path /usr/local/cargo/bin cargo-component@$CARGO_COMPONENT_VERSION
+RUN cargo binstall cargo-component@$CARGO_COMPONENT_VERSION
 
 ## ENV
 
-ENV CARGO_HOME=/var/cache/cargo-home
 ENV CARGO_TARGET_DIR=/var/cache/cargo-target
 
 # use zig as CC for cross compilation as well, that way we don't need cross-compilation gccs

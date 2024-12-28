@@ -6,10 +6,6 @@ on:
         description: "Version of the toolchain to use"
         required: true
         type: string
-      channel:
-        description: "Channel to tag the image with"
-        type: choice
-        options: ["latest", "nightly"]
 
 env:
   REGISTRY_IMAGE: ghcr.io/theedward162/rust-cross
@@ -18,14 +14,14 @@ jobs:
   release:
     strategy:
       matrix:
-        base: 
-          - os: slim-bookworm
-            image: rust
-          - os: alpine3.21
-            image: rust
-          - os: slim-trixie
-            image: ghcr.io/theedward162/rust
-    runs-on: ubuntu-latest
+        base:
+          - tag: bookworm-slim
+            image: debian
+          - tag: "3.21"
+            image: alpine
+          - tag: trixie-slim
+            image: debian
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
@@ -47,9 +43,11 @@ jobs:
           context: .
           file: rust-cross/rust-cross.Dockerfile
           platforms: linux/amd64,linux/arm64
-          tags: ${{ env.REGISTRY_IMAGE }}:${{ github.sha }}-${{ matrix.base.os }},${{ env.REGISTRY_IMAGE }}:${{ inputs.channel }}-${{ matrix.base.os }},${{ env.REGISTRY_IMAGE }}:${{ inputs.version }}-${{ matrix.base.os }}
+          tags: |
+            ${{ env.REGISTRY_IMAGE }}:${{ github.sha }}-${{ matrix.base.image }}-${{ matrix.base.tag }}
+            ${{ env.REGISTRY_IMAGE }}:${{ inputs.version }}-${{ matrix.base.image }}-${{ matrix.base.tag }}
           push: true
           build-args: |
             BASE_IMAGE=${{ matrix.base.image }}
-            BASE_OS=${{ matrix.base.os }}
+            BASE_TAG=${{ matrix.base.tag }}
             RUST_TOOLCHAIN=${{ inputs.version }}

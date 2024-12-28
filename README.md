@@ -26,3 +26,13 @@ List of packages to install on new desktop systems
 - speedcrunch, htop, ncdu
 
 - musl-dev, perl
+
+## rust-cross
+
+A Big Rust™️ image that contains everything needed for cross-compiling Rust both to different OSes and WASM (wasm32, wasip1, cargo-component, wasip2). It's also a compilation of random tibits of Cargo/Rust configuration that may or may not work when compiling for different targets.
+
+To build locally run:
+```sh
+docker build --tag ghcr.io/theedward162/rust-cross:1.83-alpine-3.21 -f rust-cross/rust-cross.Dockerfile . --build-arg BASE_IMAGE=alpine --build-arg BASE_TAG=3.21 --build-arg RUST_TOOLCHAIN=1.83
+docker build --tag ghcr.io/theedward162/rust-cross:1.83-debian-trixie-slim -f rust-cross/rust-cross.Dockerfile . --build-arg BASE_IMAGE=debian --build-arg BASE_TAG=trixie-slim --build-arg RUST_TOOLCHAIN=1.83
+```
