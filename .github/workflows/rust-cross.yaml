@@ -44,8 +44,8 @@ jobs:
           file: rust-cross/rust-cross.Dockerfile
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ env.REGISTRY_IMAGE }}:${{ github.sha }}-${{ matrix.base.image }}-${{ matrix.base.tag }}
             ${{ env.REGISTRY_IMAGE }}:${{ inputs.version }}-${{ matrix.base.image }}-${{ matrix.base.tag }}
+            ${{ env.REGISTRY_IMAGE }}:${{ inputs.version }}-${{ matrix.base.image }}-${{ matrix.base.tag }}-${{ github.sha }}
           push: true
           build-args: |
             BASE_IMAGE=${{ matrix.base.image }}

@@ -10,6 +10,7 @@ ARG TARGETARCH
 WORKDIR /tmp/rust-cross
 
 ## OS SETUP
+ARG RUSTUP_VERSION=1.27.1
 ARG RUST_TOOLCHAIN=stable
 
 ENV RUSTUP_HOME=/usr/local/rustup
@@ -41,10 +42,13 @@ RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
 		arm64) rust_arch="aarch64-unknown-linux-$libc_flavor" ;;
 		*) echo >&2 "unsupported architecture: $TARGETARCH"; exit 1 ;;
 	esac
+	rustup_name="rustup-init-$rust_arch-$RUSTUP_VERSION"
+	if [ ! -f "$rustup_name" ]; then
+		wget --progress=dot:mega -O $rustup_name "https://static.rust-lang.org/rustup/archive/$RUSTUP_VERSION/$rust_arch/rustup-init"
+		chmod +x $rustup_name
+	fi
 
-	wget "https://static.rust-lang.org/rustup/archive/1.27.1/${rust_arch}/rustup-init"
-	chmod +x rustup-init
-	./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_TOOLCHAIN --default-host $rust_arch
+	./$rustup_name -y --no-modify-path --profile minimal --default-toolchain $RUST_TOOLCHAIN --default-host $rust_arch
 	chmod -R a+w $RUSTUP_HOME $CARGO_HOME
 EOF
 
@@ -66,15 +70,15 @@ RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
 		arm64) zig_arch='aarch64' ;;
 		*) echo >&2 "unsupported architecture: $TARGETARCH"; exit 1 ;;
 	esac
-	zig_name="zig-linux-${zig_arch}-${ZIG_VERSION}"
-	if [ ! -f "${zig_name}.tar.xz" ]; then
-		wget --progress=bar:force "https://ziglang.org/download/${ZIG_VERSION}/${zig_name}.tar.xz"
+	zig_name="zig-linux-$zig_arch-$ZIG_VERSION"
+	if [ ! -f "$zig_name.tar.xz" ]; then
+		wget --progress=dot:mega "https://ziglang.org/download/$ZIG_VERSION/$zig_name.tar.xz"
 	fi
 
-	tar xJf "${zig_name}.tar.xz"
-	mv "${zig_name}/lib" /usr/local/lib/zig
-	mv "${zig_name}/zig" /usr/local/bin/zig
-	rm -r "${zig_name}"
+	tar xJf "$zig_name.tar.xz"
+	mv "$zig_name/lib" /usr/local/lib/zig
+	mv "$zig_name/zig" /usr/local/bin/zig
+	rm -r "$zig_name"
 EOF
 
 COPY bin/zig-cc /usr/local/bin/zig-cc
@@ -112,12 +116,12 @@ RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
 		arm64) bin_arch='aarch64-unknown-linux-musl' ;;
 		*) echo >&2 "unsupported architecture: $TARGETARCH"; exit 1 ;;
 	esac
-	bin_name="cargo-binstall-${bin_arch}"
-	if [ ! -f "${bin_name}.tgz" ]; then
-		wget --progress=bar:force "https://github.com/cargo-bins/cargo-binstall/releases/download/${CARGO_BINSTALL_VERSION}/${bin_name}.tgz"
+	bin_name="cargo-binstall-$bin_arch-$CARGO_BINSTALL_VERSION"
+	if [ ! -f "$bin_name.tgz" ]; then
+		wget --progress=dot:mega -O $bin_name.tgz "https://github.com/cargo-bins/cargo-binstall/releases/download/$CARGO_BINSTALL_VERSION/cargo-binstall-$bin_arch.tgz"
 	fi
 
-	tar xzf "${bin_name}.tgz"
+	tar xzf "$bin_name.tgz"
 	mv cargo-binstall $CARGO_HOME/bin/cargo-binstall
 EOF
 
