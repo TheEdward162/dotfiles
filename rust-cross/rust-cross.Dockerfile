@@ -7,6 +7,8 @@ ARG TARGETARCH
 
 WORKDIR /tmp/rust-cross
 
+## BASE SETUP (toolchain + extra os packages)
+
 ARG RUST_TOOLCHAIN=stable
 RUN rustup default "$RUST_TOOLCHAIN" && rustup component add rust-src
 RUN rustup target add \
@@ -33,6 +35,8 @@ RUN <<EOF
 	esac
 EOF
 
+## ZIG SETUP
+
 ARG ZIG_VERSION=0.13.0
 RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
 	set -e
@@ -52,9 +56,6 @@ RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
 	mv "${zigName}/zig" /usr/local/bin/zig
 	rm -r "${zigName}"
 EOF
-
-ENV CARGO_HOME=/var/cache/cargo-home
-ENV CARGO_TARGET_DIR=/var/cache/cargo-target
 
 COPY bin/zig-cc /usr/local/bin/zig-cc
 RUN <<EOF
@@ -78,24 +79,34 @@ linker = "zig-aarch64-linux-gnu"
 EOF2
 EOF
 
-# https://github.com/bytecodealliance/cargo-component/releases/download/v0.19.0/cargo-component-aarch64-unknown-linux-gnu
-ARG CARGO_COMPONENT_VERSION=0.19.0
-RUN --mount=type=cache,target=/tmp/rust-cross <<EOF
+## CARGO SUBCOMMANDS
+
+# https://github.com/cargo-bins/cargo-binstall/releases/download/v1.10.18/cargo-binstall-aarch64-unknown-linux-musl.tgz
+ARG CARGO_BINSTALL_VERSION=v1.10.18
+RUN <<EOF
 	set -e
 
 	case "$TARGETARCH" in
-		amd64) binArch='x86_64-unknown-linux-gnu' ;;
-		arm64) binArch='aarch64-unknown-linux-gnu' ;;
+		amd64) binArch='x86_64-unknown-linux-musl' ;;
+		arm64) binArch='aarch64-unknown-linux-musl' ;;
 		*) echo >&2 "unsupported architecture: $TARGETARCH"; exit 1 ;;
 	esac
-	binName="cargo-component-${binArch}"
-	if [ ! -f "${binName}" ]; then
-		wget --progress=bar:force "https://github.com/bytecodealliance/cargo-component/releases/download/v${CARGO_COMPONENT_VERSION}/${binName}"
+	binName="cargo-binstall-${binArch}"
+	if [ ! -f "${binName}.tgz" ]; then
+		wget --progress=bar:force "https://github.com/cargo-bins/cargo-binstall/releases/download/${CARGO_BINSTALL_VERSION}/${binName}.tgz"
 	fi
 
-	chmod +x "${binName}"
-	mv "${binName}" /usr/local/cargo/bin/cargo-component
+	tar xzf "${binName}.tgz"
+	mv cargo-binstall /usr/local/cargo/bin/cargo-binstall
 EOF
+
+ARG CARGO_COMPONENT_VERSION=0.19.0
+RUN cargo binstall --install-path /usr/local/cargo/bin cargo-component@$CARGO_COMPONENT_VERSION
+
+## ENV
+
+ENV CARGO_HOME=/var/cache/cargo-home
+ENV CARGO_TARGET_DIR=/var/cache/cargo-target
 
 # use zig as CC for cross compilation as well, that way we don't need cross-compilation gccs
 ENV CC_x86_64_unknown_linux_musl=zig-x86_64-linux-musl
