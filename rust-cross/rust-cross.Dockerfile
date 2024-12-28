@@ -104,4 +104,9 @@ ENV CC_aarch64_unknown_linux_musl=zig-aarch64-linux-musl
 ENV CC_aarch64_unknown_linux_gnu=zig-aarch64-linux-gnu
 
 # if using git dependencies over https this will support access tokens supplied with --mount=type=secret,id=git-password
-RUN echo '[credential]\nhelper = "!f() { echo \\"username=git\\"; echo \\"password=$(cat /run/secrets/git-password)\\"; }; f"' >$HOME/.gitconfig
+RUN <<EOF
+	cat <<EOF2 >$HOME/.gitconfig
+[credential]
+helper = "!f() { echo username=git; echo \"password=\$(cat /run/secrets/git-password)\"; }; f"
+EOF2
+EOF
