@@ -1,8 +1,8 @@
 alias legit='git'
 alias legut='git'
 
-alias ls='exa'
-alias ll='exa -laag'
+alias ls='eza'
+alias ll='eza -laag'
 alias yeet='rm -rf'
 alias bat='bat --theme ansi'
 
