@@ -5,6 +5,6 @@ case macos
 	end
 case linux
 	function load_ssh
-		keychain id_ed25519_lavusedu id_rsa_edwardium id_rsa_leviathan id_ed25519_applifting
+		keychain id_ed25519_lavusedu id_rsa_edwardium id_ed25519_leviathan id_ed25519_applifting
 	end
 end

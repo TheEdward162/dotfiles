@@ -25,4 +25,5 @@ case linux
 
 	alias reboot='doas /sbin/reboot'
 	alias poweroff='doas /sbin/poweroff'
+	alias zzz='doas /usr/sbin/zzz'
 end

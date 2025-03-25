@@ -12,6 +12,8 @@ if status is-login
 		fish_add_path "$HOME/.local/bin"
 		fish_add_path "$HOME/.cargo/bin"
 
+		set --export REQUESTS_CA_BUNDLE /etc/ssl/certs/ca-certificates.crt
+
 		set -x XDG_RUNTIME_DIR "/tmp/$USER"
 		muhsvc login
 		if test $(tty) = '/dev/tty1'
