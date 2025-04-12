@@ -49,6 +49,19 @@ def remove_target(args):
 			continue
 		yield arg
 
+def get_native_target():
+	targets_p = subprocess.run(["zig", "targets"], check = True, stdout = subprocess.PIPE)
+	# since zig switched to ZON output and python doesn't support it natively we'll just
+	# close our eyes and pray
+	text = targets_p.stdout.decode("utf-8")
+	triple_start = text.find(".triple")
+	triple_value_start = text.find('"', triple_start)
+	triple_value_end = text.find('"', triple_value_start + 1)
+	triple_value = text[triple_value_start + 1 : triple_value_end]
+	triple = triple_value.split("-")
+	triple_os = triple[1].split(".")[0]
+	return triple[0], triple_os, triple[2]
+
 target = extract_target(sys.argv[0])
 # allow target to be:
 # "cc" - do not pass -target to zig command at all
@@ -57,9 +70,7 @@ target = extract_target(sys.argv[0])
 # <other> - pass as-is
 cmd = ["zig", "cc"]
 
-targets_p = subprocess.run(["zig", "targets"], check = True, stdout = subprocess.PIPE)
-targets = json.loads(targets_p.stdout)
-native_target = targets["native"]["cpu"]["arch"] + "-" + targets["native"]["os"] + "-" + targets["native"]["abi"]
+native_target = "-".join(get_native_target())
 
 # TODO: this `not in` condition doesn't work for something like `x86_64-gnu`
 if target != "cc" and target not in native_target:
