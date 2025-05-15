@@ -16,17 +16,19 @@
 		++ lib.lists.optionals (local-os.gui && osClass == "darwin") [ iterm2 ];
 		fonts.fontconfig.enable = true;
 
-		home.shellAliases = {
-			ls = "eza";
-			ll = "eza -laag";
-			legit = "git";
-			legut = "git";
-			yeet = "rm -rf";
-		}
-		// lib.mkIf local-os.gui { code = "zeditor"; }
-		// lib.mkIf (osClass == "darwin") {
-			needu = "nix run nix-darwin -- switch --flake ~/Documents/infrastructure/metal/os#${local-os.hostname}";
-		};
+		home.shellAliases = lib.mkMerge [
+			{
+				ls = "eza";
+				ll = "eza -laag";
+				legit = "git";
+				legut = "git";
+				yeet = "rm -rf";
+			}
+			(lib.mkIf local-os.gui { code = "zeditor"; })
+			(lib.mkIf (osClass == "darwin") {
+				needu = "nix run nix-darwin -- switch --flake ~/Documents/infrastructure/metal/os#${local-os.hostname}";
+			})
+		];
 		programs.fish = {
 			enable = true;
 			interactiveShellInit = ''
