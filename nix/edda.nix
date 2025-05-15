@@ -7,7 +7,7 @@
 
 		# packages installed outside of nix: bitwarden
 		home.packages = with pkgs; [
-			eza htop ncdu git curl direnv just
+			eza htop ncdu git curl direnv just ripgrep
 			nerd-fonts.fira-mono
 			fortune cowsay
 			pass
