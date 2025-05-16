@@ -7,12 +7,13 @@
 
 		# packages installed outside of nix: bitwarden
 		home.packages = with pkgs; [
-			eza htop ncdu git curl direnv just ripgrep
+			eza htop ncdu git curl direnv just
+			ripgrep httpie p7zip jq jless
 			nerd-fonts.fira-mono
 			fortune cowsay
 			pass
 		]
-		++ lib.lists.optionals local-os.gui [ firefox zed-editor telegram-desktop ]
+		++ lib.lists.optionals local-os.gui [ firefox zed-editor python313 telegram-desktop ]
 		++ lib.lists.optionals (local-os.gui && osClass == "darwin") [ iterm2 ];
 		fonts.fontconfig.enable = true;
 
@@ -75,6 +76,19 @@
 			'';
 			functions = {
 				load_ssh = "ssh-add ~/.ssh/${local-os.hostname}";
+			};
+		};
+
+		programs.git = {
+			enable = true;
+			delta.enable = true;
+			aliases = {
+				"fap" = "fetch --all --prune";
+			};
+			extraConfig = {
+				credential = {
+					helper = ''!f() { echo username=git; echo "password=$GIT_PAT"; }; f'';
+				};
 			};
 		};
 
