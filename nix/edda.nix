@@ -81,8 +81,29 @@
 			'';
 			functions = {
 				load_ssh = "ssh-add ~/.ssh/${local-os.hostname}";
+				podrun = ''
+					set -f podman_flags
+					set -f podman_args
+					set -f seen_double_dash 0
+
+					for a in $argv[2..-1]
+						if test "x$a" = 'x--'
+							set -f seen_double_dash 1
+						else
+							if test "$seen_double_dash" = '1'
+								set -a podman_args $a
+							else
+								set -a podman_flags $a
+							end
+						end
+					end
+
+					podman build --tag "localhost/podrun" --file "$argv[1]" . || return 1
+					podman run --interactive --tty --rm $podman_flags "localhost/podrun" $podman_args
+				'';
 			};
-		};		programs.direnv.enable = true;
+		};
+		programs.direnv.enable = true;
 
 		programs.git = {
 			enable = true;
