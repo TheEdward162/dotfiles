@@ -29,7 +29,7 @@
 			(lib.mkIf local-os.gui { code = "zeditor"; })
 			(lib.mkIf (osClass == "darwin") {
 				needu-os = "nix flake update --flake ~/Documents/infrastructure/metal/os";
-				needu-apply = "darwin-rebuild switch --flake ~/Documents/infrastructure/metal/os#${local-os.hostname}";
+				needu-apply = "sudo darwin-rebuild switch --flake ~/Documents/infrastructure/metal/os#${local-os.hostname}";
 			})
 		];
 		home.sessionVariables = {
@@ -82,7 +82,7 @@
 			functions = {
 				load_ssh = "ssh-add ~/.ssh/${local-os.hostname}";
 			};
-		};
+		};		programs.direnv.enable = true;
 
 		programs.git = {
 			enable = true;
@@ -95,6 +95,9 @@
 					helper = ''!f() { echo username=git; echo "password=$GIT_PAT"; }; f'';
 				};
 			};
+			ignores = [
+				".direnv"
+			];
 		};
 
 		programs.home-manager.enable = true;
