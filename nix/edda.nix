@@ -14,7 +14,7 @@
 			fortune cowsay
 			pass
 		]
-		++ lib.lists.optionals local-os.gui [ firefox zed-editor python313 telegram-desktop mpv ]
+		++ lib.lists.optionals local-os.gui [ firefox zed-editor python313 telegram-desktop mpv dbeaver-bin ]
 		++ lib.lists.optionals (local-os.gui && osClass == "darwin") [ iterm2 ];
 		fonts.fontconfig.enable = true;
 
