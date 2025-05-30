@@ -107,6 +107,9 @@
 					podman build --tag "localhost/podrun" --file "$argv[1]" . || return 1
 					podman run --interactive --tty --rm $podman_flags "localhost/podrun" $podman_args
 				'';
+				dive-local = ''
+					podman save $argv[1] | dive docker-archive:///dev/stdin
+				'';
 			};
 		};
 		programs.direnv.enable = true;
