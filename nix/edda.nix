@@ -7,15 +7,21 @@
 
 		# packages installed outside of nix: bitwarden
 		home.packages = with pkgs; [
-			eza htop ncdu git curl direnv just
-			ripgrep httpie p7zip jq jless
+			eza htop ncdu p7zip jq jless ripgrep
+			curl httpie git
+			direnv just pass podman dive
 			helix
 			nerd-fonts.fira-mono
 			fortune cowsay
-			pass
 		]
-		++ lib.lists.optionals local-os.gui [ firefox zed-editor python313 telegram-desktop mpv dbeaver-bin ]
-		++ lib.lists.optionals (local-os.gui && osClass == "darwin") [ iterm2 ];
+		++ lib.lists.optionals local-os.gui [
+			python313
+			firefox zed-editor dbeaver-bin
+			telegram-desktop mpv
+		]
+		++ lib.lists.optionals (local-os.gui && osClass == "darwin") [
+			iterm2
+		];
 		fonts.fontconfig.enable = true;
 
 		home.shellAliases = lib.mkMerge [
