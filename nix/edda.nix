@@ -113,7 +113,6 @@
 			};
 		};
 		programs.direnv.enable = true;
-
 		programs.git = {
 			enable = true;
 			delta.enable = true;
@@ -127,6 +126,58 @@
 			};
 			ignores = [
 				".direnv"
+			];
+		};
+
+		programs.helix = {
+			enable = true;
+			settings = {
+				theme = "ao";
+			};
+		};
+
+		programs.zed-editor = {
+			enable = local-os.gui;
+			userSettings = {
+				"telemetry" = {
+					"metrics" = false;
+					"diagnostics" = false;
+				};
+				"ui_font_size" = 13;
+				"buffer_font_size" = 13;
+				"theme" = {
+					"mode" = "system";
+					"light" = "One Light";
+					"dark" = "One Dark";
+				};
+				"tab_size" = 4;
+				"hard_tabs" = true;
+				"format_on_save" = "off";
+				"languages" = {
+					"Nix" = {
+						"language_servers" = [];
+					};
+					"YAML" = {
+						"tab_size" = 2;
+						"hard_tabs" = false;
+					};
+				};
+				"lsp" = {
+					"rust-analyzer" = {
+						"binary" = {
+							"path" = "rust-analyzer";
+						};
+					};
+				};
+			};
+			userKeymaps = [
+				{
+					"context" = "Editor";
+					"bindings" = {
+						"cmd-alt-left" = "pane::GoBack";
+						"cmd-alt-right" = "pane::GoForward";
+					};
+				}
 			];
 		};
 
