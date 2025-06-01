@@ -165,6 +165,10 @@
 						"tab_size" = 2;
 						"hard_tabs" = false;
 					};
+					"Terraform" = {
+						"tab_size" = 2;
+						"hard_tabs" = false;
+					};
 				};
 				"lsp" = {
 					"rust-analyzer" = {
