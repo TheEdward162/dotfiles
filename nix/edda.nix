@@ -112,7 +112,11 @@
 				'';
 			};
 		};
-		programs.direnv.enable = true;
+		programs.direnv = {
+			enable = true;
+			# enableFishIntegration = true;
+			nix-direnv.enable = true;
+		};
 		programs.git = {
 			enable = true;
 			delta.enable = true;
