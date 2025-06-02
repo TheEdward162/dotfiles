@@ -1,6 +1,6 @@
 {
 	darwin.homebrew-casks = [ "nextcloud" "steam" "slack" ];
-	home-manager = { lib, pkgs, osConfig, osClass, ... }: let
+	home-manager = { lib, pkgs, osConfig, osClass, config, ... }: let
 		inherit (osConfig) local-os;
 	in {
 		home.stateVersion = "25.05";
@@ -157,8 +157,8 @@
 				"buffer_font_size" = 13;
 				"theme" = {
 					"mode" = "system";
-					"light" = "One Light";
-					"dark" = "One Dark";
+					"light" = "Edwardium Light";
+					"dark" = "Edwardium Dark";
 				};
 				"tab_size" = 4;
 				"hard_tabs" = true;
@@ -193,6 +193,9 @@
 					};
 				}
 			];
+			themes = {
+				"edwardium-theme" = ../configs/zed-editor/theme-edwardium.json;
+			};
 		};
 
 		programs.home-manager.enable = true;
