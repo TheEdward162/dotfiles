@@ -38,6 +38,9 @@
 				needu-apply = "sudo darwin-rebuild switch --flake ~/Documents/infrastructure/metal/os#${local-os.hostname}";
 			})
 		];
+		home.file = {
+			".local/bin/b64d".source = ../bin/b64d;
+		};
 		home.sessionVariables = {
 			"EDITOR" = "hx";
 		};
