@@ -1,5 +1,5 @@
 {
-	darwin.homebrew-casks = [ "nextcloud" "steam" ];
+	darwin.homebrew-casks = [ "nextcloud" "steam" "slack" ];
 	home-manager = { lib, pkgs, osConfig, osClass, ... }: let
 		inherit (osConfig) local-os;
 	in {
