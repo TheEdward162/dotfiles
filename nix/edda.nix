@@ -43,6 +43,9 @@
 		};
 		programs.fish = {
 			enable = true;
+			loginShellInit = ''
+				fish_add_path "$HOME/.local/bin"
+			'';
 			interactiveShellInit = ''
 				function fish_prompt
 					set -l last_status $status
